@@ -25,7 +25,7 @@ def setup(app):
 # -- Project information -----------------------------------------------------
 
 project = 'SKA SDP Workflow MID self-calibration'
-copyright = '2022, SKA SDP DP HIPPO team'
+copyright = '2023, SKA SDP DP HIPPO team'
 author = 'SKA SDP DP HIPPO team'
 
 
@@ -50,7 +50,7 @@ breathe_show_enumvalue_initializer = True
 cpp_index_common_prefix = ['sdp_']
 
 # Run Doxygen to generate the XML.
-subprocess.call('cd ../; doxygen', shell=True)
+# subprocess.call('cd ../; doxygen', shell=True)
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

@@ -123,6 +123,7 @@ spec:
             limits:
               nvidia.com/gpu: 2
       restartPolicy: Never
+      runtimeClassName: nvidia
       volumes:
         - name: shared
           persistentVolumeClaim:

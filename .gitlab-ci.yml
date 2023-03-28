@@ -4,17 +4,17 @@ variables:
 
 stages:
   - lint
-  - scan
-  - build
   - test
+  - build
   - publish
+  - scan
   - pages
 
 # Include CI templates
 include:
-  # Release automation
-  - project: "ska-telescope/templates-repository"
-    file: "gitlab-ci/includes/release.gitlab-ci.yml"
+  # Run python jobs
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/python.gitlab-ci.yml'
 
   # Docs pages
   - project: "ska-telescope/templates-repository"
@@ -23,6 +23,3 @@ include:
   # .post step finalisers e.g. badges
   - project: "ska-telescope/templates-repository"
     file: "gitlab-ci/includes/finaliser.gitlab-ci.yml"
-
-.reports: &ready_reports
-  - mkdir -p build/reports/

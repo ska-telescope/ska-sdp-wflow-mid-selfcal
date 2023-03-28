@@ -9,12 +9,13 @@ python3 selfcal_di.py \
     --phase_only_cycles="0" \
     --wsclean_extra_params="-size 16384 16384 -scale 1asec -parallel-deconvolution 2500 -gridder wgridder" \
     v12p1_actual_ical_TGcal_900s.ms selfcal_out
-"""
+"""  # noqa: E501, pylint: disable=line-too-long
 
 import argparse
-from datetime import datetime
-import time
+import subprocess
 import sys
+import time
+from datetime import datetime
 
 
 def run_app(name, args, stage, log_file):
@@ -29,21 +30,24 @@ def run_app(name, args, stage, log_file):
         stage (str): Name of current pipeline stage.
         log_file (file object): Handle to open log file.
     """
-    from subprocess import call, STDOUT
-
     log_file.write("\n" + ("#" * 40) + "\n")
-    log_file.write("#### Running {} [{}]\n".format(name, stage))
+    log_file.write(f"#### Running {name} [{stage}]\n")
     log_file.flush()
-    t0 = time.time()
-    return_code = call([name] + args, stdout=log_file, stderr=STDOUT)
+    start_time = time.time()
+    return_code = subprocess.call(
+        [name] + args, stdout=log_file, stderr=subprocess.STDOUT
+    )
     if return_code != 0:
-        raise RuntimeError("{} exited with code {}".format(name, return_code))
-    log_file.write("#### {} took {} seconds\n".format(name, time.time() - t0))
+        raise RuntimeError(f"{name} exited with code {return_code}")
+    log_file.write(f"#### {name} took {time.time() - start_time} seconds\n")
     log_file.write(("#" * 40) + "\n")
     log_file.flush()
 
 
 def main():
+    """
+    Entry point for the pipeline.
+    """
     # Define command line arguments.
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -93,14 +97,15 @@ def main():
     clean_iters = [int(item) for item in args.clean_iters.split(",")]
     phase_only = [int(item) for item in args.phase_only_cycles.split(",")]
     num_loops = len(clean_iters) - 1
-    wsclean_extras = [item for item in args.wsclean_extra_params.split(" ")]
+    wsclean_extras = args.wsclean_extra_params.split(" ")
     ms_in = args.ms_in
     image_out = args.image_out
 
     # Open a log file.
     log_file_name = datetime.now().strftime("self-cal_%Y-%m-%dT%H%M%S.txt")
-    log_file = open(log_file_name, "w")
-    log_file.write("Self-cal pipeline starting at {}\n".format(datetime.now()))
+    # pylint: disable=consider-using-with
+    log_file = open(log_file_name, "w", encoding="utf-8")
+    log_file.write(f"Self-cal pipeline starting at {datetime.now()}\n")
     log_file.write("Command line arguments:\n")
     log_file.write("\n".join(sys.argv[1:]))
     log_file.flush()
@@ -111,7 +116,7 @@ def main():
     if initial_sky_model:
         # Run DP3 to do an initial calibration.
         args = [
-            "msin={}".format(next_ms_to_use),
+            f"msin={next_ms_to_use}",
             "msout=calibrated.ms",
             "msout.overwrite=true",
             "steps=[gaincal]",
@@ -124,7 +129,7 @@ def main():
             "gaincal.usebeammodel=true",
             "gaincal.usechannelfreq=true",
             "gaincal.applysolution=true",
-            "gaincal.sourcedb={}".format(initial_sky_model),
+            f"gaincal.sourcedb={initial_sky_model}",
             "gaincal.parmdb=solutions_initial.h5",
         ]
         run_app("DP3", args, "initial calibration", log_file)
@@ -132,16 +137,16 @@ def main():
 
     # Iterate over self-cal cycles.
     for i_loop in range(num_loops):
-        stage = "cycle {}/{}".format(i_loop + 1, num_loops)
+        stage = f"cycle {i_loop + 1}/{num_loops}"
 
-        # Run WSClean with the number of clean iterations to use for this cycle.
-        # Predicted visibilities will be written out into the MODEL_DATA column.
+        # Run WSClean with the number of clean iterations to use for this cycle
+        # Predicted visibilities will be written out into the MODEL_DATA column
         # fmt: off
         args = [
             "-auto-threshold", "3",
             "-niter", str(clean_iters[i_loop]),
             "-mgain", "0.8",
-            "-name", "temp_image_cycle_{}".format(i_loop),
+            "-name", f"temp_image_cycle_{i_loop}",
         ]
         # fmt: on
         args += wsclean_extras
@@ -153,11 +158,11 @@ def main():
 
         # Run DP3 using the model written by WSClean.
         args = [
-            "msin={}".format(next_ms_to_use),
+            f"msin={next_ms_to_use}",
             "msout=calibrated.ms",
             "msout.overwrite=true",
             "steps=[gaincal]",
-            "gaincal.caltype={}".format(cal_type),
+            f"gaincal.caltype={cal_type}",
             "gaincal.maxiter=50",
             "gaincal.usemodelcolumn=true",
             "gaincal.applysolution=true",

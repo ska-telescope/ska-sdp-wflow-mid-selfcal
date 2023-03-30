@@ -4,6 +4,7 @@ import os
 import sys
 
 from ska_sdp_wflow_mid_selfcal import selfcal_pipeline
+from ska_sdp_wflow_mid_selfcal.slurm_utils import generate_slurm_script
 
 log = logging.getLogger("mid-selfcal")
 
@@ -56,32 +57,14 @@ def create_unique_output_directory(base_outdir: str) -> str:
     return outdir
 
 
-def generate_slurm_script(argv: list[str]) -> str:
-    """
-    Generate a slurm script wrapping the command line with which this app was
-    called, minus the options related to SLURM.
-    `argv` is the list of command-line arguments as returned by `sys.argv`.
-    """
-    command_line = " ".join(argv).replace("--slurm", "")
-    script_lines = [
-        "#SLURM Header",
-        "module load whatever",
-        "conda activate some_env",
-        command_line,
-    ]
-    script = "\n".join(script_lines)
-    return script
-
-
-def run_slurm_mode(argv: list[str]) -> None:
+def run_slurm_mode(*, outdir: str) -> None:
     """
     Run the program in SLURM mode. That is, generate a slurm script wrapping
     the command line with which this app was called, minus the options related
     to SLURM, and print script to stdout.
-    `argv` is the list of command-line arguments as returned by `sys.argv`.
     """
-    log.info("Running in SLURM mode")
-    script = generate_slurm_script(argv)
+    log.info("SLURM mode: generating SLURM job script instead")
+    script = generate_slurm_script(sys.argv, outdir=outdir)
     print(script)
 
 
@@ -94,7 +77,7 @@ def main():
     outdir = create_unique_output_directory(args.base_outdir)
 
     if args.slurm:
-        run_slurm_mode(sys.argv)
+        run_slurm_mode(outdir=outdir)
         return
 
     selfcal_pipeline(outdir=outdir)

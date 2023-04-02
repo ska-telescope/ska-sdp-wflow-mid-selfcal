@@ -2,7 +2,7 @@ import logging
 import signal
 import subprocess
 import time
-from typing import Iterator
+from typing import Iterator, Optional
 
 CommandLine = list[str]
 
@@ -10,14 +10,16 @@ CommandLine = list[str]
 log = logging.getLogger("mid-selfcal")
 
 
-def selfcal_pipeline(*, outdir: str) -> None:
+def selfcal_pipeline(
+    input_ms: str, *, outdir: str, wsclean_opts: Optional[str] = None
+) -> None:
     """
     Run the direction-independent self-calibration pipeline, writing any file
     output in directory "outdir".
     """
     setup_exit_handler()
     try:
-        for cmd in command_line_generator():
+        for cmd in command_line_generator(input_ms, wsclean_opts):
             run_program(cmd)
         log.info("Pipeline run: SUCCESS")
     # pylint: disable=broad-exception-caught
@@ -54,14 +56,18 @@ def cleanup(directory: str) -> None:
     log.info(f"Running cleanup in directory: {directory!r}")
 
 
-def command_line_generator() -> Iterator[CommandLine]:
+def command_line_generator(
+    input_ms: str, wsclean_opts: Optional[str] = None
+) -> Iterator[CommandLine]:
     """
     Iterator that generates the correct command lines to execute to perform
     the self-calibration loop.
     """
-    for __ in range(3):
-        yield ["echo", "LOL"]
-        yield ["sleep", "1.0"]
+    if wsclean_opts is None:
+        wsclean_args_list = ["wsclean", input_ms]
+    else:
+        wsclean_args_list = ["wsclean"] + wsclean_opts.split(" ") + [input_ms]
+    yield wsclean_args_list
 
 
 def run_program(cmd: CommandLine) -> None:
@@ -71,6 +77,7 @@ def run_program(cmd: CommandLine) -> None:
     """
     program_name = cmd[0]
     log.info(f"Starting {program_name}")
+    log.info(f"Running command line: {cmd}")
     start_time = time.perf_counter()
 
     # NEXT: capture stderr / stdout

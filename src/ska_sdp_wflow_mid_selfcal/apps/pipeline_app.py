@@ -17,6 +17,14 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
+        "--wsclean-opts",
+        type=str,
+        help=(
+            "Additional wsclean arguments as a "
+            "single string in double quotes."
+        ),
+    )
+    parser.add_argument(
         "--slurm",
         action="store_true",
         help=(
@@ -32,6 +40,11 @@ def parse_args() -> argparse.Namespace:
             "Base output directory; a uniquely named sub-directory will be "
             "created, in which all products will be written."
         ),
+    )
+    parser.add_argument(
+        "input_ms",
+        type=str,
+        help=("Input measurement set."),
     )
     return parser.parse_args()
 
@@ -97,7 +110,9 @@ def main():
         run_slurm_mode(sys.argv)
         return
 
-    selfcal_pipeline(outdir=outdir)
+    selfcal_pipeline(
+        args.input_ms, outdir=outdir, wsclean_opts=args.wsclean_opts
+    )
 
 
 if __name__ == "__main__":

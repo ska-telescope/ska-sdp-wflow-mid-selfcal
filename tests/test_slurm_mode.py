@@ -27,5 +27,5 @@ def test_generate_slurm_script():
     pipeline input.ms
     """
     expected_script = textwrap.dedent(expected_script)
-    generated_script = generate_slurm_script(sys_argv, outdir=outdir)
+    generated_script = generate_slurm_script(sys_argv, base_outdir=outdir)
     assert generated_script.strip() == expected_script.strip()

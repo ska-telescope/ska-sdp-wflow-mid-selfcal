@@ -1,29 +1,20 @@
 import argparse
 import logging
 import os
-import sys
 
 from ska_sdp_wflow_mid_selfcal import selfcal_pipeline
-from ska_sdp_wflow_mid_selfcal.slurm_utils import generate_slurm_script
 
 log = logging.getLogger("mid-selfcal")
 
 
-def parse_args() -> argparse.Namespace:
+def base_parser() -> argparse.ArgumentParser:
     """
-    Parse command-line arguments into a convenient object.
+    Returns a parser with all the common options between the pipeline app
+    and its SLURM counterpart.
     """
     parser = argparse.ArgumentParser(
         description="Launch the SKA Mid self-calibration pipeline",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        "--slurm",
-        action="store_true",
-        help=(
-            "Generate a slurm script out of the given command line and "
-            "submit it to the queue."
-        ),
     )
     parser.add_argument(
         "--base-outdir",
@@ -34,7 +25,7 @@ def parse_args() -> argparse.Namespace:
             "created, in which all products will be written."
         ),
     )
-    return parser.parse_args()
+    return parser
 
 
 def setup_logging() -> None:
@@ -57,29 +48,13 @@ def create_unique_output_directory(base_outdir: str) -> str:
     return outdir
 
 
-def run_slurm_mode(*, outdir: str) -> None:
-    """
-    Run the program in SLURM mode. That is, generate a slurm script wrapping
-    the command line with which this app was called, minus the options related
-    to SLURM, and print script to stdout.
-    """
-    log.info("SLURM mode: generating SLURM job script instead")
-    script = generate_slurm_script(sys.argv, outdir=outdir)
-    print(script)
-
-
 def main():
     """
     Entry point for the selfcal pipeline app.
     """
-    args = parse_args()
+    args = base_parser().parse_args()
     setup_logging()
     outdir = create_unique_output_directory(args.base_outdir)
-
-    if args.slurm:
-        run_slurm_mode(outdir=outdir)
-        return
-
     selfcal_pipeline(outdir=outdir)
 
 

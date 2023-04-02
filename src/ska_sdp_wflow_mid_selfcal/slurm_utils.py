@@ -4,7 +4,13 @@ from typing import Sequence
 import jinja2
 
 
-def generate_slurm_script(sys_argv: Sequence[str], *, outdir: str) -> str:
+def generate_slurm_script(
+    sys_argv: Sequence[str],
+    *,
+    cpus_per_task: int,
+    ram_gb: float,
+    partition: str
+) -> str:
     """
     Generate a slurm script wrapping the command line with which this app was
     called, minus the options related to SLURM.
@@ -30,8 +36,10 @@ def generate_slurm_script(sys_argv: Sequence[str], *, outdir: str) -> str:
         )
 
     return template.render(
-        outdir=outdir,
         pipeline_command=trimmed_pipeline_command(sys_argv),
+        cpus_per_task=cpus_per_task,
+        ram_gb=ram_gb,
+        partition=partition
     )
 
 

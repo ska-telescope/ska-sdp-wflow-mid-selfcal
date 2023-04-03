@@ -1,5 +1,5 @@
+import argparse
 import logging
-import sys
 
 from .pipeline_app import base_parser
 from ska_sdp_wflow_mid_selfcal.slurm_utils import generate_slurm_script
@@ -8,7 +8,7 @@ from ska_sdp_wflow_mid_selfcal.slurm_utils import generate_slurm_script
 log = logging.getLogger("mid-selfcal")
 
 
-SLURM_PARSER_ARGS = {
+SLURM_ARGS_DEFINITION = {
     "cpus-per-task": {
         "type": int,
         "default": 1,
@@ -26,12 +26,22 @@ SLURM_PARSER_ARGS = {
     },
 }
 
+SLURM_ARGNAMES = list(SLURM_ARGS_DEFINITION.keys())
 
-def extended_parser():
+SLURM_ARGNAMES_WITH_UNDERSCORES = list(
+    map(lambda k: k.replace("-", "_"), SLURM_ARGNAMES)
+)
+
+
+def extended_parser() -> argparse.ArgumentParser:
+    """
+    Returns a parser with both the pipeline app options *and* the SLURM options
+    added.
+    """
     parser = base_parser()
     group = parser.add_argument_group("SLURM options")
-    for param_name, param_kwargs in SLURM_PARSER_ARGS.items():
-        group.add_argument(f"--{param_name}", **param_kwargs)
+    for name, kwargs in SLURM_ARGS_DEFINITION.items():
+        group.add_argument(f"--{name}", **kwargs)
     return parser
 
 
@@ -41,13 +51,17 @@ def main():
     """
     args = extended_parser().parse_args()
 
-    kwargs = {}
-    for key in SLURM_PARSER_ARGS.keys():
-        attr_name = key.replace("-", "_")
-        attr_value = getattr(args, attr_name)
-        kwargs[attr_name] = attr_value
+    args_dict = vars(args)
+    args_keys = set(args_dict.keys())
+    slurm_args_keys = set(
+        key.replace("-", "_") for key in SLURM_ARGS_DEFINITION
+    )
+    base_args_keys = args_keys.difference(slurm_args_keys)
 
-    script = generate_slurm_script(sys.argv, **kwargs)
+    slurm_args_dict = {key: args_dict[key] for key in slurm_args_keys}
+    base_args_dict = {key: args_dict[key] for key in base_args_keys}
+
+    script = generate_slurm_script(base_args_dict, **slurm_args_dict)
     print(script)
 
 

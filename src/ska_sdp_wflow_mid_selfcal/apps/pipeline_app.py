@@ -4,6 +4,10 @@ import os
 import sys
 
 from ska_sdp_wflow_mid_selfcal import selfcal_pipeline
+from ska_sdp_wflow_mid_selfcal.directory_creation import (
+    create_pipeline_output_subdirectory,
+)
+from ska_sdp_wflow_mid_selfcal.logging_setup import setup_logging
 
 log = logging.getLogger("mid-selfcal")
 
@@ -49,26 +53,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_logging() -> None:
-    """
-    Configure the logger(s) used by the pipeline.
-    """
-    logging.basicConfig(
-        level="DEBUG",
-        format="[%(levelname)s - %(asctime)s - %(name)s] %(message)s",
-    )
-
-
-def create_unique_output_directory(base_outdir: str) -> str:
-    """
-    Create a sub-directory of `base_outdir` in which the pipeline outputs
-    will be written.
-    """
-    outdir = base_outdir
-    log.info(f"Created output directory: {outdir}")
-    return outdir
-
-
 def generate_slurm_script(argv: list[str]) -> str:
     """
     Generate a slurm script wrapping the command line with which this app was
@@ -103,13 +87,16 @@ def main():
     Entry point for the selfcal pipeline app.
     """
     args = parse_args()
-    setup_logging()
-    outdir = create_unique_output_directory(args.base_outdir)
 
     if args.slurm:
         run_slurm_mode(sys.argv)
         return
 
+    outdir = create_pipeline_output_subdirectory(args.base_outdir)
+    logfile_path = os.path.join(outdir, "logfile.txt")
+    setup_logging(logfile_path)
+
+    log.info(f"Created output directory: {outdir!r}")
     selfcal_pipeline(
         args.input_ms, outdir=outdir, wsclean_opts=args.wsclean_opts
     )

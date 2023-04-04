@@ -1,4 +1,5 @@
 import logging
+import os
 import signal
 import subprocess
 import time
@@ -19,7 +20,10 @@ def selfcal_pipeline(
     """
     setup_exit_handler()
     try:
-        for cmd in command_line_generator(input_ms, wsclean_opts):
+        generator = command_line_generator(
+            input_ms, outdir=outdir, wsclean_opts=wsclean_opts
+        )
+        for cmd in generator:
             run_program(cmd)
         log.info("Pipeline run: SUCCESS")
     # pylint: disable=broad-exception-caught
@@ -57,14 +61,18 @@ def cleanup(directory: str) -> None:
 
 
 def command_line_generator(
-    input_ms: str, wsclean_opts: Optional[str] = None
+    input_ms: str, *, outdir: str, wsclean_opts: Optional[str] = None
 ) -> Iterator[CommandLine]:
     """
     Iterator that generates the correct command lines to execute to perform
     the self-calibration loop.
     """
-
     wsclean_opts_list = wsclean_opts.split() if wsclean_opts else []
+
+    # Instruct wsclean to save the output files in `outdir`
+    image_prefix = os.path.join(outdir, "wsclean")
+    wsclean_opts_list.extend(["-name", image_prefix])
+
     yield ["wsclean"] + wsclean_opts_list + [input_ms]
 
 

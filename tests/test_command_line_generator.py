@@ -1,3 +1,5 @@
+import pytest
+
 from ska_sdp_wflow_mid_selfcal.pipeline import command_line_generator
 
 
@@ -25,3 +27,14 @@ def test_command_line_generator():
     gen = command_line_generator(input_ms, outdir=outdir)
     expected_output = ["wsclean", "-name", f"{outdir}/wsclean", "input.ms"]
     assert expected_output == list(gen)[0]
+
+
+def test_command_line_generator_raises_if_wsclean_opts_contains_name():
+    """
+    Test we get a ValueError if '-name' is specified as part of wsclean_opts
+    """
+    gen = command_line_generator(
+        "input.ms", outdir="/data", wsclean_opts=["-name", "custom_name"]
+    )
+    with pytest.raises(ValueError):
+        list(gen)

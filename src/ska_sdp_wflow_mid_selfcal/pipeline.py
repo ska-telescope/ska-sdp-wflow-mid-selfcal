@@ -70,6 +70,9 @@ def command_line_generator(
     if wsclean_opts is None:
         wsclean_opts = []
 
+    if "-name" in wsclean_opts:
+        raise ValueError("-name must not be specified in wsclean_opts")
+
     # Instruct wsclean to save the output files in `outdir`, with the default
     # base file name "wsclean"
     image_prefix = os.path.join(outdir, "wsclean")

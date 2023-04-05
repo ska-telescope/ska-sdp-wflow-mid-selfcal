@@ -24,7 +24,6 @@ def test_command_line_generator():
     gen = command_line_generator(input_ms, wsclean_opts=wsclean_opts)
     assert expected_output == list(gen)[0]
 
-    wsclean_opts = None
     expected_output = ["wsclean", "input.ms"]
-    gen = command_line_generator(input_ms, wsclean_opts=wsclean_opts)
+    gen = command_line_generator(input_ms)
     assert expected_output == list(gen)[0]

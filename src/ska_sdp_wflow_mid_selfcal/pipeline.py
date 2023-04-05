@@ -63,11 +63,9 @@ def command_line_generator(
     Iterator that generates the correct command lines to execute to perform
     the self-calibration loop.
     """
-    if wsclean_opts is None:
-        wsclean_args_list = ["wsclean", input_ms]
-    else:
-        wsclean_args_list = ["wsclean"] + wsclean_opts.split(" ") + [input_ms]
-    yield wsclean_args_list
+
+    wsclean_opts_list = wsclean_opts.split() if wsclean_opts else []
+    yield ["wsclean"] + wsclean_opts_list + [input_ms]
 
 
 def run_program(cmd: CommandLine) -> None:

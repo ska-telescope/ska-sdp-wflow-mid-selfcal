@@ -15,8 +15,14 @@ def selfcal_pipeline(
     input_ms: str, *, outdir: str, wsclean_opts: Optional[list[str]] = None
 ) -> None:
     """
-    Run the direction-independent self-calibration pipeline, writing any file
-    output in directory "outdir".
+    Run the direction-independent self-calibration pipeline.
+
+    Args:
+        input_ms: path to the input Measurement Set as a string
+        outdir: path to the directory where all output files will be written
+        wsclean_opts: list of strings with additional user-defined options to
+            forward to WSCLEAN. "-name" is NOT allowed, as this option
+            is managed by the pipeline itself.
     """
     setup_exit_handler()
     try:

@@ -25,6 +25,7 @@ def parse_args() -> argparse.Namespace:
         type=str.split,
         help=(
             "Additional wsclean arguments as a single string in double quotes."
+            " -name is NOT allowed."
         ),
     )
     parser.add_argument(

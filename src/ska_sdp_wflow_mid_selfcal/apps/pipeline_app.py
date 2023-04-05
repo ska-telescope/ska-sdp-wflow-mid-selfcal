@@ -22,10 +22,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--wsclean-opts",
-        type=str,
+        type=str.split,
         help=(
-            "Additional wsclean arguments as a "
-            "single string in double quotes."
+            "Additional wsclean arguments as a single string in double quotes."
         ),
     )
     parser.add_argument(
@@ -48,7 +47,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "input_ms",
         type=str,
-        help=("Input measurement set."),
+        help="Input measurement set.",
     )
     return parser.parse_args()
 

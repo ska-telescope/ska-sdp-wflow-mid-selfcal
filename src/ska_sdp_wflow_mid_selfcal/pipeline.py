@@ -12,7 +12,7 @@ log = logging.getLogger("mid-selfcal")
 
 
 def selfcal_pipeline(
-    input_ms: str, *, outdir: str, wsclean_opts: Optional[str] = None
+    input_ms: str, *, outdir: str, wsclean_opts: Optional[list[str]] = None
 ) -> None:
     """
     Run the direction-independent self-calibration pipeline, writing any file
@@ -61,19 +61,19 @@ def cleanup(directory: str) -> None:
 
 
 def command_line_generator(
-    input_ms: str, *, outdir: str, wsclean_opts: Optional[str] = None
+    input_ms: str, *, outdir: str, wsclean_opts: Optional[list[str]] = None
 ) -> Iterator[CommandLine]:
     """
     Iterator that generates the correct command lines to execute to perform
     the self-calibration loop.
     """
-    wsclean_opts_list = wsclean_opts.split() if wsclean_opts else []
+    if wsclean_opts is None:
+        wsclean_opts = []
 
-    # Instruct wsclean to save the output files in `outdir`
+    # Instruct wsclean to save the output files in `outdir`, with the default
+    # base file name "wsclean"
     image_prefix = os.path.join(outdir, "wsclean")
-    wsclean_opts_list.extend(["-name", image_prefix])
-
-    yield ["wsclean"] + wsclean_opts_list + [input_ms]
+    yield ["wsclean"] + wsclean_opts + ["-name", image_prefix] + [input_ms]
 
 
 def run_program(cmd: CommandLine) -> None:

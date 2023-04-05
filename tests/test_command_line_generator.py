@@ -11,19 +11,17 @@ def test_command_line_generator():
     """
 
     input_ms = "input.ms"
-    wsclean_opts = "-size 1000 1000 -niter 10000"
-    expected_output = [
-        "wsclean",
-        "-size",
-        "1000",
-        "1000",
-        "-niter",
-        "10000",
-        "input.ms",
-    ]
-    gen = command_line_generator(input_ms, wsclean_opts=wsclean_opts)
+    outdir = "/data"
+
+    wsclean_opts = ["-size", "1000", "1000", "-niter", "10000"]
+    gen = command_line_generator(
+        input_ms, outdir=outdir, wsclean_opts=wsclean_opts
+    )
+    expected_output = (
+        ["wsclean"] + wsclean_opts + ["-name", f"{outdir}/wsclean", input_ms]
+    )
     assert expected_output == list(gen)[0]
 
-    expected_output = ["wsclean", "input.ms"]
-    gen = command_line_generator(input_ms)
+    gen = command_line_generator(input_ms, outdir=outdir)
+    expected_output = ["wsclean", "-name", f"{outdir}/wsclean", "input.ms"]
     assert expected_output == list(gen)[0]

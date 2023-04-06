@@ -5,6 +5,8 @@ import subprocess
 import time
 from typing import Iterator, Optional
 
+from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
+
 CommandLine = list[str]
 
 
@@ -30,7 +32,7 @@ def selfcal_pipeline(
             input_ms, outdir=outdir, wsclean_opts=wsclean_opts
         )
         for cmd in generator:
-            run_program(cmd)
+            run_command_line_in_workdir(cmd, outdir)
         log.info("Pipeline run: SUCCESS")
     # pylint: disable=broad-exception-caught
     except (Exception, SystemExit) as err:
@@ -85,14 +87,15 @@ def command_line_generator(
     yield ["wsclean"] + wsclean_opts + ["-name", image_prefix] + [input_ms]
 
 
-def run_program(cmd: CommandLine) -> None:
+def run_command_line(cmd: CommandLine) -> None:
     """
-    Run given command line via subprocess.check_call() and logs its total run
+    Run given command line via subprocess.check_call() and log its total run
     time.
     """
     program_name = cmd[0]
-    log.info(f"Starting {program_name}")
-    log.info(f"Running command line: {cmd}")
+    cmd_str = " ".join(cmd)
+    log.info(f"Running {program_name}")
+    log.info(cmd_str)
     start_time = time.perf_counter()
 
     # NEXT: capture stderr / stdout
@@ -103,3 +106,12 @@ def run_program(cmd: CommandLine) -> None:
     end_time = time.perf_counter()
     run_time_seconds = end_time - start_time
     log.info(f"{program_name} finished in {run_time_seconds:.2f} seconds")
+
+
+def run_command_line_in_workdir(cmd: CommandLine, workdir: str) -> None:
+    """
+    Same as run_command_line() but do it with the working directory temporarily
+    changed to `workdir`.
+    """
+    with ChangeDir(workdir):
+        run_command_line(cmd)

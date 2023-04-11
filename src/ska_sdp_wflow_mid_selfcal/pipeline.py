@@ -6,6 +6,7 @@ import time
 from typing import Iterator, Optional
 
 from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
+from ska_sdp_wflow_mid_selfcal.singularify import singularify
 
 CommandLine = list[str]
 
@@ -14,7 +15,11 @@ log = logging.getLogger("mid-selfcal")
 
 
 def selfcal_pipeline(
-    input_ms: str, *, outdir: str, wsclean_opts: Optional[list[str]] = None
+    input_ms: str,
+    *,
+    outdir: str,
+    singularity_image: str,
+    wsclean_opts: Optional[list[str]] = None,
 ) -> None:
     """
     Run the direction-independent self-calibration pipeline.
@@ -22,6 +27,8 @@ def selfcal_pipeline(
     Args:
         input_ms: path to the input Measurement Set as a string
         outdir: path to the directory where all output files will be written
+        singularity_image: path to the singularity image file with both wsclean
+            and DP3 installed.
         wsclean_opts: list of strings with additional user-defined options to
             forward to WSCLEAN. "-name" is NOT allowed, as this option
             is managed by the pipeline itself.
@@ -29,7 +36,10 @@ def selfcal_pipeline(
     setup_exit_handler()
     try:
         generator = command_line_generator(
-            input_ms, outdir=outdir, wsclean_opts=wsclean_opts
+            input_ms,
+            outdir=outdir,
+            singularity_image=singularity_image,
+            wsclean_opts=wsclean_opts,
         )
         for cmd in generator:
             run_command_line_in_workdir(cmd, outdir)
@@ -69,22 +79,31 @@ def cleanup(directory: str) -> None:
 
 
 def command_line_generator(
-    input_ms: str, *, outdir: str, wsclean_opts: Optional[list[str]] = None
+    input_ms: str,
+    *,
+    outdir: str,
+    singularity_image: str,
+    wsclean_opts: Optional[list[str]] = None,
 ) -> Iterator[CommandLine]:
     """
     Iterator that generates the correct command lines to execute to perform
-    the self-calibration loop.
+    the self-calibration loop. The generated command lines contain only
+    *absolute* paths when referring to a file or directory. When executed,
+    we want the command lines to behave the same regardless of the working
+    directory from where they are called.
     """
+    input_ms = os.path.realpath(input_ms)
+    outdir = os.path.realpath(outdir)
+    singularity_image = os.path.realpath(singularity_image)
+
     if wsclean_opts is None:
         wsclean_opts = []
 
     if "-name" in wsclean_opts:
         raise ValueError("-name must not be specified in wsclean_opts")
 
-    # Instruct wsclean to save the output files in `outdir`, with the default
-    # base file name "wsclean"
-    image_prefix = os.path.join(outdir, "wsclean")
-    yield ["wsclean"] + wsclean_opts + ["-name", image_prefix] + [input_ms]
+    command = ["wsclean"] + wsclean_opts + [input_ms]
+    yield singularify(command, singularity_image)
 
 
 def run_command_line(cmd: CommandLine) -> None:

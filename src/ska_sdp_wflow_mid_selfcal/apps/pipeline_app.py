@@ -20,6 +20,15 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
+        "--singularity-image",
+        type=os.path.realpath,
+        required=True,
+        help=(
+            "Path to the singularity image file with both wsclean "
+            "and DP3 installed."
+        ),
+    )
+    parser.add_argument(
         "--wsclean-opts",
         type=str.split,
         help=(
@@ -38,7 +47,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "input_ms",
-        type=str,
+        type=os.path.realpath,
         help="Input measurement set.",
     )
     return parser.parse_args()
@@ -55,7 +64,10 @@ def main():
 
     log.info(f"Created output directory: {outdir!r}")
     selfcal_pipeline(
-        args.input_ms, outdir=outdir, wsclean_opts=args.wsclean_opts
+        args.input_ms,
+        outdir=outdir,
+        singularity_image=args.singularity_image,
+        wsclean_opts=args.wsclean_opts,
     )
 
 

@@ -102,7 +102,7 @@ def command_line_generator(
     if "-name" in wsclean_opts:
         raise ValueError("-name must not be specified in wsclean_opts")
 
-    command = ["wsclean"] + wsclean_opts + [input_ms]
+    command = ["wsclean", *wsclean_opts, "-temp-dir", outdir, input_ms]
     yield singularify(command, singularity_image)
 
 

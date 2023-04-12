@@ -1,5 +1,7 @@
 from pathlib import Path
-from typing import Iterable, Iterator, Optional, Sequence
+from typing import Iterable, Iterator, Optional
+
+CommandLine = list[str]
 
 
 def _extract_abspath(arg: str) -> Optional[Path]:
@@ -30,8 +32,8 @@ def _iter_unique(iterable: Iterable) -> Iterator:
 
 
 def singularify(
-    command_line: Sequence[str], singularity_image: str
-) -> list[str]:
+    command_line: CommandLine, singularity_image: str
+) -> CommandLine:
     """
     Transform a command line so that it can be run within a Singularity
     container. NOTE: Any argument that contains a path in `command_line` must
@@ -100,3 +102,15 @@ def singularify(
 
     new_command_line.extend([amend_argument(arg) for arg in command_line])
     return new_command_line
+
+
+def singularified_generator(
+    cmdline_iterable: Iterable[CommandLine], singularity_image: str
+) -> Iterator[CommandLine]:
+    """
+    Given an iterable of bare-metal command lines, yield new command lines
+    transformed so that they can be run within a Singularity container.
+    See "singularify" function documentation for details.
+    """
+    for cmd in cmdline_iterable:
+        yield singularify(cmd, singularity_image)

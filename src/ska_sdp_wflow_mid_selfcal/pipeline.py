@@ -35,12 +35,6 @@ def selfcal_pipeline(
     """
     setup_exit_handler()
     try:
-        # NOTE: it is necessary to make all path arguments absolute for the
-        # command-line generation code to work properly
-        input_ms = os.path.realpath(input_ms)
-        outdir = os.path.realpath(outdir)
-        singularity_image = os.path.realpath(singularity_image)
-
         generator = command_line_generator(
             input_ms,
             outdir=outdir,
@@ -94,19 +88,22 @@ def command_line_generator(
 ) -> Iterator[CommandLine]:
     """
     Iterator that generates the correct command lines to execute to perform
-    the self-calibration loop. NOTE: Every path argument must be given as an
-    absolute path.
+    the self-calibration loop.
 
     Notes:
         This generates bare-metal command lines only. The logic of
         transforming those into command lines that can be executed in
         a singularity container is implemented elsewhere.
 
-        The generated command lines must contain only *absolute* paths when
+        The generated command lines contain only *absolute* paths when
         referring to a file or directory. When executed, we want the command
         lines to behave the same regardless of the working directory from
-        where they are called.
+        where they are called. Also, the code that generates singularity
+        commands needs all paths to be absolute.
     """
+    input_ms = os.path.abspath(input_ms)
+    outdir = os.path.abspath(outdir)
+
     if wsclean_opts is None:
         wsclean_opts = []
 

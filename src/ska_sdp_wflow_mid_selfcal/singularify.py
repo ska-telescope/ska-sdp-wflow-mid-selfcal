@@ -61,11 +61,15 @@ def singularify(
 
     Example:
         >>> command = ["python", "/path/to/script.py", "--data", "/path/to/file.txt"]
-        >>> singularity_image = "image.sif"
+        >>> singularity_image = "/other/path/image.sif"
         >>> new_command = singularify(command, singularity_image)
         >>> print(new_command)
-        ['singularity', 'exec', '--bind', '/path/to:/mnt/path/to', 'image.sif', 'python', '/mnt/path/to/script.py', '--data', '/mnt/path/to/file.txt']
+        ['singularity', 'exec', '--bind', '/path/to:/mnt/path/to', '/other/path/image.sif', 'python', '/mnt/path/to/script.py', '--data', '/mnt/path/to/file.txt']
     """  # noqa: E501, pylint: disable=line-too-long
+
+    # NOTE: we need to make sure the generated command line runs from any
+    # working directory, hence making paths absolute
+    singularity_image = str(Path(singularity_image).absolute())
 
     # Dictionary {argument_string: (source_abspath, target_abspath)}
     # This is used to replace source paths (as seen from the host)

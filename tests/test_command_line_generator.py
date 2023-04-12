@@ -12,7 +12,7 @@ def test_command_line_generator():
           the right syntax, order, or values.
     """
 
-    input_ms = "input.ms"
+    input_ms = "/path/to/input.ms"
     outdir = "/data"
     wsclean_opts = ["-size", "1000", "1000", "-niter", "10000"]
 
@@ -32,7 +32,9 @@ def test_command_line_generator_raises_if_wsclean_opts_contains_name():
     Test we get a ValueError if '-name' is specified as part of wsclean_opts
     """
     gen = command_line_generator(
-        "input.ms", outdir="/data", wsclean_opts=["-name", "custom_name"]
+        "/path/to/input.ms",
+        outdir="/data",
+        wsclean_opts=["-name", "custom_name"],
     )
     with pytest.raises(ValueError):
         list(gen)

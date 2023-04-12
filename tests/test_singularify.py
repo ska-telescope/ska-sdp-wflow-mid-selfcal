@@ -14,7 +14,7 @@ def test_singularify_given_wsclean_command():
         "/output/wsclean",
         "/data/input.ms",
     ]
-    image = "wsclean.sif"
+    image = "/images/wsclean.sif"
     expected_result = [
         "singularity",
         "exec",
@@ -46,7 +46,7 @@ def test_singularify_given_dp3_command():
         "msout=/output/calibrated.ms",
         "gaincal.applysolution=true",
     ]
-    image = "DP3.sif"
+    image = "/images/DP3.sif"
     expected_result = [
         "singularity",
         "exec",
@@ -69,7 +69,7 @@ def test_singularify_given_command_with_repeated_directory():
     Make sure no repeated bind mount points are generated.
     """
     command = ["touch", "/data/file1", "/data/file2"]
-    image = "ubuntu.sif"
+    image = "/images/ubuntu.sif"
     expected_result = [
         "singularity",
         "exec",

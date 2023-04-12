@@ -13,7 +13,11 @@ class ChangeDir:
         Args:
             new_dir: string containing the path of the new working directory.
 
-        Usage:
+        Raises:
+            FileNotFoundError: if the specified directory does not exist.
+
+        Example::
+
             with ChangeDir('/path/to/new/directory'):
                 # Code that runs in the new directory
                 print(os.getcwd())

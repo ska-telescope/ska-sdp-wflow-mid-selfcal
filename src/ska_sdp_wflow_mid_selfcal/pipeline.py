@@ -3,13 +3,14 @@ import os
 import signal
 import subprocess
 import time
-from typing import Iterator, Optional
+from typing import Optional
 
 from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
 from ska_sdp_wflow_mid_selfcal.singularify import (
     CommandLine,
     singularified_generator,
 )
+from ska_sdp_wflow_mid_selfcal.selfcal_logic import command_line_generator
 
 log = logging.getLogger("mid-selfcal")
 
@@ -78,39 +79,6 @@ def cleanup(directory: str) -> None:
     directory.
     """
     log.info(f"Running cleanup in directory: {directory!r}")
-
-
-def command_line_generator(
-    input_ms: str,
-    *,
-    outdir: str,
-    wsclean_opts: Optional[list[str]] = None,
-) -> Iterator[CommandLine]:
-    """
-    Iterator that generates the correct command lines to execute to perform
-    the self-calibration loop.
-
-    Notes:
-        This generates bare-metal command lines only. The logic of
-        transforming those into command lines that can be executed in
-        a singularity container is implemented elsewhere.
-
-        The generated command lines contain only *absolute* paths when
-        referring to a file or directory. When executed, we want the command
-        lines to behave the same regardless of the working directory from
-        where they are called. Also, the code that generates singularity
-        commands needs all paths to be absolute.
-    """
-    input_ms = os.path.abspath(input_ms)
-    outdir = os.path.abspath(outdir)
-
-    if wsclean_opts is None:
-        wsclean_opts = []
-
-    if "-name" in wsclean_opts:
-        raise ValueError("-name must not be specified in wsclean_opts")
-
-    yield ["wsclean", *wsclean_opts, "-temp-dir", outdir, input_ms]
 
 
 def run_command_line(cmd: CommandLine) -> None:

@@ -92,15 +92,16 @@ def command_line_generator(
     input_ms = os.path.abspath(input_ms)
     outdir = os.path.abspath(outdir)
 
-    num_cycles = len(clean_iters)
+    # NOTE: minus one is deliberate, see docs for "clean_iters"
+    num_cycles = len(clean_iters) - 1
     current_input_ms = input_ms
     calibrated_ms = os.path.join(outdir, "calibrated.ms")
 
-    for icycle, niter in enumerate(clean_iters):
+    for icycle in range(num_cycles):
         log.info(f"Starting Major Cycle {icycle + 1} / {num_cycles}")
         yield wsclean_command(
             current_input_ms,
-            niter=niter,
+            niter=clean_iters[icycle],
             temp_dir=outdir,
             size=size,
             scale=scale,

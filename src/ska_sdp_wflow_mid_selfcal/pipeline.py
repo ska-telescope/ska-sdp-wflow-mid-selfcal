@@ -16,11 +16,7 @@ log = logging.getLogger("mid-selfcal")
 
 
 def selfcal_pipeline(
-    input_ms: str,
-    *,
-    outdir: str,
-    singularity_image: str,
-    wsclean_opts: Optional[list[str]] = None,
+    input_ms: str, *, outdir: str, singularity_image: str
 ) -> None:
     """
     Run the direction-independent self-calibration pipeline.
@@ -36,11 +32,7 @@ def selfcal_pipeline(
     """
     setup_exit_handler()
     try:
-        generator = command_line_generator(
-            input_ms,
-            outdir=outdir,
-            wsclean_opts=wsclean_opts,
-        )
+        generator = command_line_generator(input_ms, outdir=outdir)
         generator = singularified_generator(generator, singularity_image)
         for cmd in generator:
             run_command_line_in_workdir(cmd, outdir)

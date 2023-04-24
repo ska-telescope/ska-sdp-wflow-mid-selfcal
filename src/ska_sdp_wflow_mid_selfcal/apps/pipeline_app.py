@@ -29,14 +29,6 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--wsclean-opts",
-        type=str.split,
-        help=(
-            "Additional wsclean arguments as a single string in double quotes."
-            " -name is NOT allowed."
-        ),
-    )
-    parser.add_argument(
         "--base-outdir",
         type=str,
         default=os.getcwd(),
@@ -66,8 +58,7 @@ def main():
     selfcal_pipeline(
         args.input_ms,
         outdir=outdir,
-        singularity_image=args.singularity_image,
-        wsclean_opts=args.wsclean_opts,
+        singularity_image=args.singularity_image
     )
 
 

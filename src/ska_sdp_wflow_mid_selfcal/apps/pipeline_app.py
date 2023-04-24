@@ -1,14 +1,11 @@
 import argparse
-import logging
 import os
 
 from ska_sdp_wflow_mid_selfcal import selfcal_pipeline
 from ska_sdp_wflow_mid_selfcal.directory_creation import (
     create_pipeline_output_subdirectory,
 )
-from ska_sdp_wflow_mid_selfcal.logging_setup import setup_logging
-
-log = logging.getLogger("mid-selfcal")
+from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER, setup_logging
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,9 +45,7 @@ def parse_args() -> argparse.Namespace:
         "--scale",
         type=str,
         required=True,
-        help=(
-            "Scale of a pixel, as a string such as \"20asec\" or \"0.01deg\"."
-        ),
+        help=('Scale of a pixel, as a string such as "20asec" or "0.01deg".'),
     )
     parser.add_argument(
         "--clean-iters",
@@ -92,7 +87,7 @@ def main():
     logfile_path = os.path.join(outdir, "logfile.txt")
     setup_logging(logfile_path)
 
-    log.info(f"Created output directory: {outdir!r}")
+    LOGGER.info(f"Created output directory: {outdir!r}")
     selfcal_pipeline(
         args.input_ms,
         outdir=outdir,

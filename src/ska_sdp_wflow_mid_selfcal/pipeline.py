@@ -1,15 +1,12 @@
-import logging
 import signal
 import subprocess
 import time
-
 from typing import Sequence
 
 from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
-from ska_sdp_wflow_mid_selfcal.singularify import CommandLine, singularify
+from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER
 from ska_sdp_wflow_mid_selfcal.selfcal_logic import command_line_generator
-
-log = logging.getLogger("mid-selfcal")
+from ska_sdp_wflow_mid_selfcal.singularify import CommandLine, singularify
 
 
 def selfcal_pipeline(
@@ -52,12 +49,12 @@ def selfcal_pipeline(
         for cmd in generator:
             singularity_cmd = singularify(cmd, singularity_image)
             run_command_line_in_workdir(singularity_cmd, outdir)
-        log.info("Pipeline run: SUCCESS")
+        LOGGER.info("Pipeline run: SUCCESS")
 
     # pylint: disable=broad-exception-caught
     except (Exception, SystemExit) as err:
-        log.exception(f"Error: {err!r}")
-        log.error("Pipeline run: FAIL")
+        LOGGER.exception(f"Error: {err!r}")
+        LOGGER.error("Pipeline run: FAIL")
 
     finally:
         # This will run even if SystemExit is raised by the exit handler
@@ -72,7 +69,7 @@ def setup_exit_handler() -> None:
 
     def exit_handler(signum, __):
         signame = signal.Signals(signum).name
-        log.warning(f"{signame} received, shutting down")
+        LOGGER.warning(f"{signame} received, shutting down")
         # Kills all managed subprocesses
         # https://stackoverflow.com/q/67823770
         raise SystemExit(signum)
@@ -86,7 +83,7 @@ def cleanup(directory: str) -> None:
     Delete any temporary files created by a pipeline run in the given
     directory.
     """
-    log.info(f"Running cleanup in directory: {directory!r}")
+    LOGGER.info(f"Running cleanup in directory: {directory!r}")
 
 
 def run_command_line(cmd: CommandLine) -> None:
@@ -96,8 +93,8 @@ def run_command_line(cmd: CommandLine) -> None:
     """
     program_name = cmd[0]
     cmd_str = " ".join(cmd)
-    log.info(f"Running {program_name}")
-    log.info(cmd_str)
+    LOGGER.info(f"Running {program_name}")
+    LOGGER.info(cmd_str)
     start_time = time.perf_counter()
 
     # NEXT: capture stderr / stdout
@@ -107,7 +104,7 @@ def run_command_line(cmd: CommandLine) -> None:
 
     end_time = time.perf_counter()
     run_time_seconds = end_time - start_time
-    log.info(f"{program_name} finished in {run_time_seconds:.2f} seconds")
+    LOGGER.info(f"{program_name} finished in {run_time_seconds:.2f} seconds")
 
 
 def run_command_line_in_workdir(cmd: CommandLine, workdir: str) -> None:

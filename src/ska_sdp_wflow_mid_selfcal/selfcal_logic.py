@@ -1,14 +1,12 @@
-import logging
 import os
 from typing import Iterator, Sequence
 
-# TODO: Move type aliases to somewhere sensible
+from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER
+
 CommandLine = list[str]
 
-# TODO: Also, put that somewhere centralised
-log = logging.getLogger("mid-selfcal")
 
-
+# pylint: disable=too-many-locals
 def wsclean_command(
     input_ms: str,
     *,
@@ -98,7 +96,7 @@ def command_line_generator(
     calibrated_ms = os.path.join(outdir, "calibrated.ms")
 
     for icycle in range(num_cycles):
-        log.info(f"Starting Major Cycle {icycle + 1} / {num_cycles}")
+        LOGGER.info(f"Starting Major Cycle {icycle + 1} / {num_cycles}")
         yield wsclean_command(
             current_input_ms,
             niter=clean_iters[icycle],
@@ -118,7 +116,7 @@ def command_line_generator(
         )
         current_input_ms = calibrated_ms
 
-    log.info(f"Making final image")
+    LOGGER.info("Making final image")
     yield wsclean_command(
         current_input_ms,
         niter=clean_iters[-1],

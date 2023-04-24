@@ -1,9 +1,7 @@
 import logging
-import os
 import signal
 import subprocess
 import time
-from typing import Optional
 
 from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
 from ska_sdp_wflow_mid_selfcal.singularify import (
@@ -16,7 +14,12 @@ log = logging.getLogger("mid-selfcal")
 
 
 def selfcal_pipeline(
-    input_ms: str, *, outdir: str, singularity_image: str
+    input_ms: str,
+    *,
+    outdir: str,
+    singularity_image: str,
+    size: tuple[int, int],
+    scale: str,
 ) -> None:
     """
     Run the direction-independent self-calibration pipeline.
@@ -26,13 +29,15 @@ def selfcal_pipeline(
         outdir: path to the directory where all output files will be written
         singularity_image: path to the singularity image file with both wsclean
             and DP3 installed.
-        wsclean_opts: list of strings with additional user-defined options to
-            forward to WSCLEAN. "-name" is NOT allowed, as this option
-            is managed by the pipeline itself.
+        size: size of the output image in pixels as an int tuple
+            (width, height)
+        scale: scale of a pixel, as a string such as "20asec" or "0.01deg".
     """
     setup_exit_handler()
     try:
-        generator = command_line_generator(input_ms, outdir=outdir)
+        generator = command_line_generator(
+            input_ms, outdir=outdir, size=size, scale=scale
+        )
         generator = singularified_generator(generator, singularity_image)
         for cmd in generator:
             run_command_line_in_workdir(cmd, outdir)

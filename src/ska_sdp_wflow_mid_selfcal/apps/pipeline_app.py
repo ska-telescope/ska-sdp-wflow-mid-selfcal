@@ -38,6 +38,23 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--size",
+        nargs=2,
+        type=int,
+        required=True,
+        help=(
+            "Output image size as two integers <width> <height>"
+        ),
+    )
+    parser.add_argument(
+        "--scale",
+        type=str,
+        required=True,
+        help=(
+            "Scale of a pixel, as a string such as \"20asec\" or \"0.01deg\"."
+        ),
+    )
+    parser.add_argument(
         "input_ms",
         type=os.path.realpath,
         help="Input measurement set.",
@@ -58,7 +75,9 @@ def main():
     selfcal_pipeline(
         args.input_ms,
         outdir=outdir,
-        singularity_image=args.singularity_image
+        singularity_image=args.singularity_image,
+        size=args.size,
+        scale=args.scale
     )
 
 

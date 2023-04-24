@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Optional, Iterator, Sequence
+from typing import Iterator, Sequence
 
 # TODO: Move type aliases to somewhere sensible
 CommandLine = list[str]
@@ -74,6 +74,8 @@ def command_line_generator(
     input_ms: str,
     *,
     outdir: str,
+    size: tuple[int, int],
+    scale: str,
     clean_iters: Sequence[int] = (20, 100, 500, 500_000),
     phase_only_cycles: Sequence[int] = (0,),
 ) -> Iterator[CommandLine]:
@@ -100,8 +102,8 @@ def command_line_generator(
             current_input_ms,
             niter=niter,
             temp_dir=outdir,
-            size=(4096, 4096),
-            scale="1asec",
+            size=size,
+            scale=scale,
             name=f"temp{icycle+1:02d}",
         )
 
@@ -120,7 +122,7 @@ def command_line_generator(
         current_input_ms,
         niter=clean_iters[-1],
         temp_dir=outdir,
-        size=(4096, 4096),
-        scale="1asec",
+        size=size,
+        scale=scale,
         name="final",
     )

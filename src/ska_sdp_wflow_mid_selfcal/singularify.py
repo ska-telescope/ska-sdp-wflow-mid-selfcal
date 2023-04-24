@@ -106,15 +106,3 @@ def singularify(
 
     new_command_line.extend([amend_argument(arg) for arg in command_line])
     return new_command_line
-
-
-def singularified_generator(
-    cmdline_iterable: Iterable[CommandLine], singularity_image: str
-) -> Iterator[CommandLine]:
-    """
-    Given an iterable of bare-metal command lines, yield new command lines
-    transformed so that they can be run within a Singularity container.
-    See "singularify" function documentation for details.
-    """
-    for cmd in cmdline_iterable:
-        yield singularify(cmd, singularity_image)

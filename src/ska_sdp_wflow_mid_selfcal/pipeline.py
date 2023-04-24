@@ -6,10 +6,7 @@ import time
 from typing import Sequence
 
 from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
-from ska_sdp_wflow_mid_selfcal.singularify import (
-    CommandLine,
-    singularified_generator,
-)
+from ska_sdp_wflow_mid_selfcal.singularify import CommandLine, singularify
 from ska_sdp_wflow_mid_selfcal.selfcal_logic import command_line_generator
 
 log = logging.getLogger("mid-selfcal")
@@ -52,9 +49,9 @@ def selfcal_pipeline(
             clean_iters=clean_iters,
             phase_only_cycles=phase_only_cycles,
         )
-        generator = singularified_generator(generator, singularity_image)
         for cmd in generator:
-            run_command_line_in_workdir(cmd, outdir)
+            singularity_cmd = singularify(cmd, singularity_image)
+            run_command_line_in_workdir(singularity_cmd, outdir)
         log.info("Pipeline run: SUCCESS")
 
     # pylint: disable=broad-exception-caught

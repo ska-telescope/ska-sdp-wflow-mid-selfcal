@@ -76,8 +76,8 @@ def command_line_generator(
     outdir: str,
     size: tuple[int, int],
     scale: str,
-    clean_iters: Sequence[int] = (20, 100, 500, 500_000),
-    phase_only_cycles: Sequence[int] = (0,),
+    clean_iters: Sequence[int],
+    phase_only_cycles: Sequence[int],
 ) -> Iterator[CommandLine]:
     """
     Iterator that generates the correct, bare-metal command lines to perform

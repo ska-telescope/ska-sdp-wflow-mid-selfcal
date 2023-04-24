@@ -42,9 +42,7 @@ def parse_args() -> argparse.Namespace:
         nargs=2,
         type=int,
         required=True,
-        help=(
-            "Output image size as two integers <width> <height>"
-        ),
+        help="Output image size as two integers <width> <height>",
     )
     parser.add_argument(
         "--scale",
@@ -52,6 +50,29 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help=(
             "Scale of a pixel, as a string such as \"20asec\" or \"0.01deg\"."
+        ),
+    )
+    parser.add_argument(
+        "--clean-iters",
+        nargs="+",
+        type=int,
+        default=[20, 100, 500, 500_000],
+        help=(
+            "Maximum Clean iterations per self-cal cycle, as a list of "
+            "integers. The number of calibration cycles is one less than the "
+            "length of the list, as the final value is used to make the image "
+            "after the last calibration."
+        ),
+    )
+    parser.add_argument(
+        "--phase-only-cycles",
+        nargs="+",
+        type=int,
+        default=[0],
+        help=(
+            "List of self-cal cycle indices (zero-based) in which to perform "
+            "phase-only calibration. A reasonable default is to run a "
+            "phase-only calibration for the first cycle."
         ),
     )
     parser.add_argument(
@@ -77,7 +98,9 @@ def main():
         outdir=outdir,
         singularity_image=args.singularity_image,
         size=args.size,
-        scale=args.scale
+        scale=args.scale,
+        clean_iters=args.clean_iters,
+        phase_only_cycles=args.phase_only_cycles,
     )
 
 

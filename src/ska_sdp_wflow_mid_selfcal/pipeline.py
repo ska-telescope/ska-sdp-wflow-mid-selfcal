@@ -3,6 +3,8 @@ import signal
 import subprocess
 import time
 
+from typing import Sequence
+
 from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
 from ska_sdp_wflow_mid_selfcal.singularify import (
     CommandLine,
@@ -20,6 +22,8 @@ def selfcal_pipeline(
     singularity_image: str,
     size: tuple[int, int],
     scale: str,
+    clean_iters: Sequence[int] = (20, 100, 500, 500_000),
+    phase_only_cycles: Sequence[int] = (0,),
 ) -> None:
     """
     Run the direction-independent self-calibration pipeline.
@@ -30,13 +34,23 @@ def selfcal_pipeline(
         singularity_image: path to the singularity image file with both wsclean
             and DP3 installed.
         size: size of the output image in pixels as an int tuple
-            (width, height)
+            (width, height).
         scale: scale of a pixel, as a string such as "20asec" or "0.01deg".
+        clean_iters: maximum Clean iterations per self-cal cycle. The number of
+            calibration cycles is one less than the length of the list, as the
+            final value is used to make the image after the last calibration.
+        phase_only_cycles: sequence of self-cal cycle indices (zero-based) in
+            which to perform phase-only calibration.
     """
     setup_exit_handler()
     try:
         generator = command_line_generator(
-            input_ms, outdir=outdir, size=size, scale=scale
+            input_ms,
+            outdir=outdir,
+            size=size,
+            scale=scale,
+            clean_iters=clean_iters,
+            phase_only_cycles=phase_only_cycles,
         )
         generator = singularified_generator(generator, singularity_image)
         for cmd in generator:

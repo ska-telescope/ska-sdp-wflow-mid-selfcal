@@ -19,7 +19,7 @@ def test_stream_capture():
     ]
 
     print(code_lines, flush=True)
-    cmdline = ["python3.9", "-c", "\n".join(code_lines)]
+    cmdline = ["python", "-c", "\n".join(code_lines)]
 
     captured_stdout = []
     captured_stderr = []

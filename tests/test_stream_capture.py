@@ -6,11 +6,9 @@ def test_stream_capture():
     Tests the stream_capture function by running a simple Python
     script that prints some output to stdout and stderr
     using python's -c command
-
     """
     code_lines = [
         "import sys",
-        "import time",
         "for i in range(3):",
         "    print('Running', flush=True)",
         "    print('Test', flush=True)",
@@ -18,7 +16,6 @@ def test_stream_capture():
         "    print('Is it?', flush=True,file=sys.stderr)",
     ]
 
-    print(code_lines, flush=True)
     cmdline = ["python", "-c", "\n".join(code_lines)]
 
     captured_stdout = []

@@ -18,7 +18,10 @@ def stream_capture(
         stdout_consumer: A callable function that accepts a string argument
             representing a line of standard output from the subprocess.
         stderr_consumer: A callable function that accepts a string argument
-            representing a line of standard error output from the subprocess.
+            representing a line of standard error from the subprocess.
+    Raises:
+        subprocess.CalledProcessError: if the subprocess exited
+            with a non-zero code.
     """
     with subprocess.Popen(
         cmd,

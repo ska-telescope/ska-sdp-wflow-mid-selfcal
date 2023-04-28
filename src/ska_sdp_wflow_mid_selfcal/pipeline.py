@@ -7,6 +7,10 @@ from typing import Sequence
 from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
 from ska_sdp_wflow_mid_selfcal.cleanup import cleanup
 from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER, LOGGER_NAME
+from ska_sdp_wflow_mid_selfcal.multi_node_support import (
+    get_num_allocated_nodes,
+    make_multi_node,
+)
 from ska_sdp_wflow_mid_selfcal.selfcal_logic import command_line_generator
 from ska_sdp_wflow_mid_selfcal.singularify import CommandLine, singularify
 from ska_sdp_wflow_mid_selfcal.stream_capture import (
@@ -51,9 +55,14 @@ def selfcal_pipeline(
             clean_iters=clean_iters,
             phase_only_cycles=phase_only_cycles,
         )
-        for cmd in generator:
-            singularity_cmd = singularify(cmd, singularity_image)
-            run_command_line_in_workdir(singularity_cmd, outdir)
+        num_nodes = get_num_allocated_nodes()
+        LOGGER.info(f"Number of allocated nodes: {num_nodes}")
+
+        for base_cmd in generator:
+            cmd = singularify(base_cmd, singularity_image)
+            cmd = make_multi_node(cmd)
+            run_command_line_in_workdir(cmd, outdir)
+
         LOGGER.info("Pipeline run: SUCCESS")
 
     # pylint: disable=broad-exception-caught
@@ -115,7 +124,7 @@ def run_command_line_in_workdir(cmd: CommandLine, workdir: str) -> None:
 
 
 def _get_program_name(cmd: CommandLine) -> str:
-    if "wsclean" in cmd:
+    if "wsclean" in cmd or "wsclean-mp" in cmd:
         return "wsclean"
     if "DP3" in cmd:
         return "DP3"

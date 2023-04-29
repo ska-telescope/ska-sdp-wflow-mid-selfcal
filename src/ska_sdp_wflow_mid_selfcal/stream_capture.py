@@ -3,15 +3,15 @@ from threading import Thread
 from typing import Any, Callable
 
 
-def stream_capture(
+def check_call_with_stream_capture(
     cmd: list[str],
     stdout_consumer: Callable[[str], Any],
     stderr_consumer: Callable[[str], Any],
 ):
     """
     Launches a subprocess and captures its standard output and error
-    streams in separate threads, calling the specified
-    consumers for each line of output.
+    streams in separate threads, calling the specified consumers for each line
+    of output.
 
     Args:
         cmd: The commandline to execute in a subprocess, as a list of strings.
@@ -19,6 +19,7 @@ def stream_capture(
             representing a line of standard output from the subprocess.
         stderr_consumer: A callable function that accepts a string argument
             representing a line of standard error from the subprocess.
+
     Raises:
         subprocess.CalledProcessError: if the subprocess exited
             with a non-zero code.

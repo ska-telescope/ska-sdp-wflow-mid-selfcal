@@ -1,12 +1,16 @@
+import logging
+import shlex
 import signal
-import subprocess
 import time
 from typing import Sequence
 
 from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
-from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER
+from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER, LOGGER_NAME
 from ska_sdp_wflow_mid_selfcal.selfcal_logic import command_line_generator
 from ska_sdp_wflow_mid_selfcal.singularify import CommandLine, singularify
+from ska_sdp_wflow_mid_selfcal.stream_capture import (
+    check_call_with_stream_capture,
+)
 
 
 def selfcal_pipeline(
@@ -88,19 +92,20 @@ def cleanup(directory: str) -> None:
 
 def run_command_line(cmd: CommandLine) -> None:
     """
-    Run given command line via subprocess.check_call() and log its total run
-    time.
+    Run given command line, and live-capture its standard output and error
+    streams to Python loggers. Also log the total run time of the command
+    at the end.
     """
     program_name = cmd[0]
-    cmd_str = " ".join(cmd)
+    cmd_str = shlex.join(cmd)
     LOGGER.info(f"Running {program_name}")
     LOGGER.info(cmd_str)
     start_time = time.perf_counter()
 
-    # NEXT: capture stderr / stdout
-    # If we want to redirect to a logger, here's one possible solution:
-    # https://stackoverflow.com/q/35488927
-    subprocess.check_call(cmd)
+    subprocess_logger = logging.getLogger(f"{LOGGER_NAME}.{program_name}")
+    check_call_with_stream_capture(
+        cmd, subprocess_logger.debug, subprocess_logger.debug
+    )
 
     end_time = time.perf_counter()
     run_time_seconds = end_time - start_time

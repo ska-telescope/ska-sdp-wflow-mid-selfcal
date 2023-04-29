@@ -1,11 +1,12 @@
-from ska_sdp_wflow_mid_selfcal.stream_capture import stream_capture
+from ska_sdp_wflow_mid_selfcal.stream_capture import (
+    check_call_with_stream_capture,
+)
 
 
-def test_stream_capture():
+def test_check_call_with_stream_capture():
     """
-    Tests the stream_capture function by running a simple Python
-    script that prints some output to stdout and stderr
-    using python's -c command
+    Tests the check_call_with_stream_capture function by running a simple
+    Python script that prints some output to stdout and stderr.
     """
     code_lines = [
         "import sys",
@@ -27,7 +28,7 @@ def test_stream_capture():
     def stderr_consumer(line: str):
         captured_stderr.append(line)
 
-    stream_capture(cmdline, stdout_consumer, stderr_consumer)
+    check_call_with_stream_capture(cmdline, stdout_consumer, stderr_consumer)
 
     assert captured_stdout == 3 * ["Running", "Test", "Output"]
     assert captured_stderr == 3 * ["Is it?"]

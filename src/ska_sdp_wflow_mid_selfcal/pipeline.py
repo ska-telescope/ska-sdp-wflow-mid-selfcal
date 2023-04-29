@@ -96,17 +96,17 @@ def run_command_line(cmd: CommandLine) -> None:
     streams to Python loggers. Also log the total run time of the command
     at the end.
     """
-    program_name = cmd[0]
-    cmd_str = shlex.join(cmd)
+    program_name = _get_program_name(cmd)
     LOGGER.info(f"Running {program_name}")
+    cmd_str = shlex.join(cmd)
     LOGGER.info(cmd_str)
-    start_time = time.perf_counter()
 
     subprocess_logger = logging.getLogger(f"{LOGGER_NAME}.{program_name}")
+
+    start_time = time.perf_counter()
     check_call_with_stream_capture(
         cmd, subprocess_logger.debug, subprocess_logger.debug
     )
-
     end_time = time.perf_counter()
     run_time_seconds = end_time - start_time
     LOGGER.info(f"{program_name} finished in {run_time_seconds:.2f} seconds")
@@ -119,3 +119,11 @@ def run_command_line_in_workdir(cmd: CommandLine, workdir: str) -> None:
     """
     with ChangeDir(workdir):
         run_command_line(cmd)
+
+
+def _get_program_name(cmd: CommandLine) -> str:
+    if "wsclean" in cmd:
+        return "wsclean"
+    if "DP3" in cmd:
+        return "DP3"
+    return cmd[0]

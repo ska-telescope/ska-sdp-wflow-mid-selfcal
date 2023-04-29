@@ -5,6 +5,7 @@ import time
 from typing import Sequence
 
 from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
+from ska_sdp_wflow_mid_selfcal.cleanup import cleanup
 from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER, LOGGER_NAME
 from ska_sdp_wflow_mid_selfcal.selfcal_logic import command_line_generator
 from ska_sdp_wflow_mid_selfcal.singularify import CommandLine, singularify
@@ -80,14 +81,6 @@ def setup_exit_handler() -> None:
 
     signal.signal(signal.SIGTERM, exit_handler)
     signal.signal(signal.SIGINT, exit_handler)
-
-
-def cleanup(directory: str) -> None:
-    """
-    Delete any temporary files created by a pipeline run in the given
-    directory.
-    """
-    LOGGER.info(f"Running cleanup in directory: {directory!r}")
 
 
 def run_command_line(cmd: CommandLine) -> None:

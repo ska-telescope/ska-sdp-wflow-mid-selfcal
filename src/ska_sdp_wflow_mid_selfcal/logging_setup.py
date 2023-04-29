@@ -19,7 +19,7 @@ def setup_logging(logfile_path: str) -> None:
     fmt = "[%(levelname)s - %(asctime)s - %(name)s] %(message)s"
     formatter = logging.Formatter(fmt)
 
-    stream_handler = logging.StreamHandler(sys.stderr)
+    stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
     LOGGER.addHandler(stream_handler)
 

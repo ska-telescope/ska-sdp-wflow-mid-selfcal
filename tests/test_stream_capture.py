@@ -1,3 +1,7 @@
+import subprocess
+
+import pytest
+
 from ska_sdp_wflow_mid_selfcal.stream_capture import (
     check_call_with_stream_capture,
 )
@@ -32,3 +36,17 @@ def test_check_call_with_stream_capture():
 
     assert captured_stdout == 3 * ["Running", "Test", "Output"]
     assert captured_stderr == 3 * ["Is it?"]
+
+
+def test_check_call_with_stream_capture_raises_on_nonzero_exit_code():
+    """
+    Check that CalledProcessError is raised if command exits with non-zero
+    code.
+    """
+    cmdline = ["ls", "/definitely/non/existent/path/"]
+
+    def null_consumer(__: str):
+        pass
+
+    with pytest.raises(subprocess.CalledProcessError):
+        check_call_with_stream_capture(cmdline, null_consumer, null_consumer)

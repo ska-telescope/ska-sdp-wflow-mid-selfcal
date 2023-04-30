@@ -15,7 +15,7 @@ from ska_sdp_wflow_mid_selfcal.stream_capture import (
 
 
 def selfcal_pipeline(
-    input_ms: str,
+    input_ms_list: list[str],
     *,
     outdir: str,
     singularity_image: str,
@@ -28,7 +28,7 @@ def selfcal_pipeline(
     Run the direction-independent self-calibration pipeline.
 
     Args:
-        input_ms: path to the input Measurement Set as a string
+        input_ms_list: List of paths (strings) to the input Measurement Sets.
         outdir: path to the directory where all output files will be written
         singularity_image: path to the singularity image file with both wsclean
             and DP3 installed.
@@ -44,7 +44,7 @@ def selfcal_pipeline(
     setup_exit_handler()
     try:
         generator = command_line_generator(
-            input_ms,
+            input_ms_list,
             outdir=outdir,
             size=size,
             scale=scale,

@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 0.2.1 - 2023-05-04
+
+### Added
+
+- Can now process input data split into multiple measurement sets, where each holds one distinct sub-band.
+
+### Changed
+
+- In the pipeline app, input measurement set(s) must now be provided via the required command-line option `--input-ms`, instead of a positional argument.
+
+
 ## 0.2.0 - 2023-04-30
 
 Intermediate release in PI18. While the self-calibration logic remains identical to `v0.1.0`, the code has been fully re-architected to be easily run on CSD3, unit testable, and extended in future iterations.

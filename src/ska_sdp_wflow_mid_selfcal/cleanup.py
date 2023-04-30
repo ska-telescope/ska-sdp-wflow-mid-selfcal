@@ -2,6 +2,7 @@ import pathlib
 import shutil
 
 from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER
+from ska_sdp_wflow_mid_selfcal.selfcal_logic import TEMPORARY_MS
 
 
 def cleanup(directory: str) -> None:
@@ -12,7 +13,7 @@ def cleanup(directory: str) -> None:
     LOGGER.info(f"Running cleanup in directory: {directory!r}")
     dir_path = pathlib.Path(directory).absolute().resolve()
     _remove_files_with_suffix(dir_path, ".tmp")
-    _remove_directory(dir_path / "calibrated.ms")
+    _remove_directory(dir_path / TEMPORARY_MS)
 
 
 def _remove_files_with_suffix(parent_dir: pathlib.Path, suffix: str):

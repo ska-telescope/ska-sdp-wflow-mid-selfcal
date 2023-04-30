@@ -71,9 +71,11 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "input_ms",
+        "--input-ms",
+        nargs="+",
+        required=True,
         type=os.path.realpath,
-        help="Input measurement set.",
+        help="Input measurement set(s).",
     )
     return parser.parse_args()
 

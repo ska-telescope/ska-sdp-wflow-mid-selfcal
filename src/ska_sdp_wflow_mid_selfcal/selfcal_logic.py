@@ -1,9 +1,11 @@
 import os
-from typing import Iterator, Sequence
+from typing import Final, Iterator, Sequence
 
 from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER
 
 CommandLine = list[str]
+
+TEMPORARY_MS: Final[str] = "BewareTheBlob.ms"
 
 
 # pylint: disable=too-many-locals
@@ -51,6 +53,17 @@ def wsclean_command(
     return ["wsclean", *opt_list, input_ms]
 
 
+def dp3_merge_command(input_ms: list[str], msout: str) -> CommandLine:
+    """
+    Generate a DP3 command to merge multiple measurement sets into one,
+    including only the DATA column. We have do this because gaincal cannot
+    handle multiple input MSes.
+    """
+    csv = ",".join(input_ms)
+    msin = f"[{csv}]"
+    return ["DP3", f"msin={msin}", f"msout={msout}", "steps=[]"]
+
+
 def dp3_gaincal_command(msin: str, msout: str, *, caltype: str) -> CommandLine:
     """
     Generate a DP3 gain calibration command-line.
@@ -69,7 +82,7 @@ def dp3_gaincal_command(msin: str, msout: str, *, caltype: str) -> CommandLine:
 
 
 def command_line_generator(
-    input_ms: str,
+    input_ms_list: list[str],
     *,
     outdir: str,
     size: tuple[int, int],
@@ -87,18 +100,26 @@ def command_line_generator(
     where they are called. Also, the code that transforms bare-metal commands
     into singularity commands needs all paths to be absolute.
     """
-    input_ms = os.path.abspath(input_ms)
+    input_ms_list = [os.path.abspath(fname) for fname in input_ms_list]
     outdir = os.path.abspath(outdir)
+    temporary_ms = os.path.join(outdir, TEMPORARY_MS)
 
     # NOTE: minus one is deliberate, see docs for "clean_iters"
     num_cycles = len(clean_iters) - 1
-    current_input_ms = input_ms
-    calibrated_ms = os.path.join(outdir, "calibrated.ms")
+
+    # Merge all input MSes into one, because DP3's gaincal can only operate on
+    # a single input MS. We do this even if there's only one input MS, because
+    # that gives us a fresh MS with only the DATA column, and thus run times
+    # representative of a production system (where one would have to take the
+    # time to create a MODEL_DATA column for example)
+    LOGGER.info("Merging input measurement sets into one")
+    yield dp3_merge_command(input_ms_list, temporary_ms)
 
     for icycle in range(num_cycles):
         LOGGER.info(f"Starting Major Cycle {icycle + 1} / {num_cycles}")
+
         yield wsclean_command(
-            current_input_ms,
+            temporary_ms,
             niter=clean_iters[icycle],
             temp_dir=outdir,
             size=size,
@@ -109,16 +130,11 @@ def command_line_generator(
         caltype = (
             "diagonalphase" if icycle in phase_only_cycles else "diagonal"
         )
-        yield dp3_gaincal_command(
-            current_input_ms,
-            calibrated_ms,
-            caltype=caltype,
-        )
-        current_input_ms = calibrated_ms
+        yield dp3_gaincal_command(temporary_ms, temporary_ms, caltype=caltype)
 
     LOGGER.info("Making final image")
     yield wsclean_command(
-        current_input_ms,
+        temporary_ms,
         niter=clean_iters[-1],
         temp_dir=outdir,
         size=size,

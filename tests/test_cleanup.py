@@ -2,6 +2,7 @@ import pathlib
 import tempfile
 
 from ska_sdp_wflow_mid_selfcal.cleanup import cleanup
+from ska_sdp_wflow_mid_selfcal.selfcal_logic import TEMPORARY_MS
 
 
 def test_cleanup():
@@ -17,7 +18,7 @@ def test_cleanup():
 
         # Create mock calibrated measurement set directory containing one
         # subdir and one file
-        calibrated_ms = tempdir_path / "calibrated.ms"
+        calibrated_ms = tempdir_path / TEMPORARY_MS
         calibrated_ms.mkdir()
         (calibrated_ms / "subdir").mkdir()
         (calibrated_ms / "somefile").touch()

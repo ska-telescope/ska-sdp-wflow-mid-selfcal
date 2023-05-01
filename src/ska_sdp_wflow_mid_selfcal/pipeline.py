@@ -4,7 +4,7 @@ import signal
 import time
 from typing import Sequence
 
-from ska_sdp_wflow_mid_selfcal.change_dir import ChangeDir
+from ska_sdp_wflow_mid_selfcal.change_dir import change_dir
 from ska_sdp_wflow_mid_selfcal.cleanup import cleanup
 from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER, LOGGER_NAME
 from ska_sdp_wflow_mid_selfcal.multi_node_support import (
@@ -119,7 +119,7 @@ def run_command_line_in_workdir(cmd: CommandLine, workdir: str) -> None:
     Same as run_command_line() but do it with the working directory temporarily
     changed to `workdir`.
     """
-    with ChangeDir(workdir):
+    with change_dir(workdir):
         run_command_line(cmd)
 
 

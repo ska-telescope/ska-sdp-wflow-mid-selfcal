@@ -31,7 +31,7 @@ def test_singularify_given_wsclean_command():
         "/mnt/output/wsclean",
         "/mnt/data/input.ms",
     ]
-    assert expected_result == singularify(command, image)
+    assert singularify(command, image) == expected_result
 
 
 def test_singularify_given_dp3_command():
@@ -61,7 +61,37 @@ def test_singularify_given_dp3_command():
         "msout=/mnt/output/calibrated.ms",
         "gaincal.applysolution=true",
     ]
-    assert expected_result == singularify(command, image)
+    assert singularify(command, image) == expected_result
+
+
+def test_singularify_given_dp3_command_with_multiple_mses():
+    """
+    Check whether absolute paths provided in the form
+    `{PARAM}=[{ABSPATH1},...,{ABSPATHN}]` are detected and processed correctly.
+    """
+    command = [
+        "DP3",
+        "steps=[gaincal]",
+        "msin=[/data/input1.ms,/data/input2.ms]",
+        "msout=/output/calibrated.ms",
+        "gaincal.applysolution=true",
+    ]
+    image = "/images/DP3.sif"
+    expected_result = [
+        "singularity",
+        "exec",
+        "--bind",
+        "/data:/mnt/data",
+        "--bind",
+        "/output:/mnt/output",
+        image,
+        "DP3",
+        "steps=[gaincal]",
+        "msin=[/mnt/data/input1.ms,/mnt/data/input2.ms]",
+        "msout=/mnt/output/calibrated.ms",
+        "gaincal.applysolution=true",
+    ]
+    assert singularify(command, image) == expected_result
 
 
 def test_singularify_given_command_with_repeated_directory():
@@ -80,4 +110,4 @@ def test_singularify_given_command_with_repeated_directory():
         "/mnt/data/file1",
         "/mnt/data/file2",
     ]
-    assert expected_result == singularify(command, image)
+    assert singularify(command, image) == expected_result

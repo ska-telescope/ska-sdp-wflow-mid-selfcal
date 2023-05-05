@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-sdp-wflow-mid-selfcal"
-version = "0.1.0"
+version = "0.2.2"
 description = "SKA Mid self-calibration pipeline"
 authors = ["The SKA Mid self-calibration pipeline developers"]
 license = "BSD-3-Clause"

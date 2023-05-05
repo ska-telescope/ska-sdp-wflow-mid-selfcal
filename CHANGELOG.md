@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 0.2.2 - 2023-05-05
+
+### Added
+
+- The pipeline will now run `wsclean-mp` distributed on multiple nodes if executed in a SLURM environment and if multiple nodes have been allocated. Otherwise, it runs the regular `wsclean`.
+- Dockerfile with MPI-enabled WSClean, where WSClean has been patched so that it chunks its large MPI messages into 1 GB pieces (instead of 2 GB, the official maximum MPI message size). This is to work around an issue with the network interfaces on CSD3 nodes that refuse to send 1 GB+ MPI messages.
+
+
 ## 0.2.1 - 2023-05-05
 
 ### Added

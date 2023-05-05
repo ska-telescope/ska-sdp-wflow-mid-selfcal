@@ -6,11 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## 0.2.1 - 2023-05-04
+## 0.2.1 - 2023-05-05
 
 ### Added
 
-- Can now process input data split into multiple measurement sets, where each holds one distinct sub-band.
+- Can now process input data split into multiple measurement sets, where each holds one distinct sub-band. Before processing actually starts, the input data are copied and merged into a single, temporary measurement set, on which self-calibration is then performed in-place.
 
 ### Changed
 

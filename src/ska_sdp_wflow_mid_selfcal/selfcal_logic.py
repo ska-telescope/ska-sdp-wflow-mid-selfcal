@@ -6,6 +6,8 @@ from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER
 CommandLine = list[str]
 
 TEMPORARY_MS: Final[str] = "BewareTheBlob.ms"
+""" Name of the temporary measurement set file on which self-calibration is
+performed in-place. """
 
 
 # pylint: disable=too-many-locals

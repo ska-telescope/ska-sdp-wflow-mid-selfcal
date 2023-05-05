@@ -71,10 +71,9 @@ def test_singularify_given_dp3_command_with_multiple_mses():
     """
     command = [
         "DP3",
-        "steps=[gaincal]",
         "msin=[/data/input1.ms,/data/input2.ms]",
-        "msout=/output/calibrated.ms",
-        "gaincal.applysolution=true",
+        "msout=/output/merged.ms",
+        "steps=[]",
     ]
     image = "/images/DP3.sif"
     expected_result = [
@@ -86,10 +85,9 @@ def test_singularify_given_dp3_command_with_multiple_mses():
         "/output:/mnt/output",
         image,
         "DP3",
-        "steps=[gaincal]",
         "msin=[/mnt/data/input1.ms,/mnt/data/input2.ms]",
-        "msout=/mnt/output/calibrated.ms",
-        "gaincal.applysolution=true",
+        "msout=/mnt/output/merged.ms",
+        "steps=[]",
     ]
     assert singularify(command, image) == expected_result
 

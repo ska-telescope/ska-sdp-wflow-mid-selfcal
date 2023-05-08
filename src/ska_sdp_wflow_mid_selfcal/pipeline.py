@@ -4,6 +4,7 @@ import signal
 import time
 from typing import Sequence
 
+from ska_sdp_wflow_mid_selfcal import __version__
 from ska_sdp_wflow_mid_selfcal.change_dir import change_dir
 from ska_sdp_wflow_mid_selfcal.cleanup import cleanup
 from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER, LOGGER_NAME
@@ -47,6 +48,7 @@ def selfcal_pipeline(
     """
     setup_exit_handler()
     try:
+        LOGGER.info(f"Running version: {__version__}")
         generator = command_line_generator(
             input_ms_list,
             outdir=outdir,

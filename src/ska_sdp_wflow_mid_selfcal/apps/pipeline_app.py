@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from ska_sdp_wflow_mid_selfcal import selfcal_pipeline
+from ska_sdp_wflow_mid_selfcal import __version__, selfcal_pipeline
 from ska_sdp_wflow_mid_selfcal.directory_creation import (
     create_pipeline_output_subdirectory,
 )
@@ -16,6 +16,7 @@ def parse_args() -> argparse.Namespace:
         description="Launch the SKA Mid self-calibration pipeline",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument(
         "--singularity-image",
         type=os.path.realpath,

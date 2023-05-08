@@ -1,11 +1,9 @@
 import argparse
 import os
 
-from ska_sdp_wflow_mid_selfcal import __version__, selfcal_pipeline
-from ska_sdp_wflow_mid_selfcal.directory_creation import (
-    create_pipeline_output_subdirectory,
-)
-from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER, setup_logging
+from .. import __version__, selfcal_pipeline
+from ..directory_creation import create_pipeline_output_subdirectory
+from ..logging_setup import LOGGER, setup_logging
 
 
 def parse_args() -> argparse.Namespace:

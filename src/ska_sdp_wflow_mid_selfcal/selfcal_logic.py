@@ -1,7 +1,7 @@
 import os
 from typing import Final, Iterator, Sequence
 
-from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER
+from .logging_setup import LOGGER
 
 CommandLine = list[str]
 

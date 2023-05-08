@@ -4,19 +4,14 @@ import signal
 import time
 from typing import Sequence
 
-from ska_sdp_wflow_mid_selfcal import __version__
-from ska_sdp_wflow_mid_selfcal.change_dir import change_dir
-from ska_sdp_wflow_mid_selfcal.cleanup import cleanup
-from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER, LOGGER_NAME
-from ska_sdp_wflow_mid_selfcal.multi_node_support import (
-    get_num_allocated_nodes,
-    make_multi_node,
-)
-from ska_sdp_wflow_mid_selfcal.selfcal_logic import command_line_generator
-from ska_sdp_wflow_mid_selfcal.singularify import CommandLine, singularify
-from ska_sdp_wflow_mid_selfcal.stream_capture import (
-    check_call_with_stream_capture,
-)
+from ._version import __version__
+from .change_dir import change_dir
+from .cleanup import cleanup
+from .logging_setup import LOGGER, LOGGER_NAME
+from .multi_node_support import get_num_allocated_nodes, make_multi_node
+from .selfcal_logic import command_line_generator
+from .singularify import CommandLine, singularify
+from .stream_capture import check_call_with_stream_capture
 
 
 def selfcal_pipeline(

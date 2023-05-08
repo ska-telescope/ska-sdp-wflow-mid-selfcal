@@ -1,8 +1,8 @@
 import pathlib
 import shutil
 
-from ska_sdp_wflow_mid_selfcal.logging_setup import LOGGER
-from ska_sdp_wflow_mid_selfcal.selfcal_logic import TEMPORARY_MS
+from .logging_setup import LOGGER
+from .selfcal_logic import TEMPORARY_MS
 
 
 def cleanup(directory: str) -> None:

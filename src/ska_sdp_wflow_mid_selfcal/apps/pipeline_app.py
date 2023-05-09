@@ -47,6 +47,14 @@ def parse_args() -> argparse.Namespace:
         help=('Scale of a pixel, as a string such as "20asec" or "0.01deg".'),
     )
     parser.add_argument(
+        "--initial-sky-model",
+        type=str,
+        help=(
+            "Optional path to a DP3 sky model file to use for an initial "
+            "calibration, before the self-cal starts."
+        ),
+    )
+    parser.add_argument(
         "--gaincal-solint",
         type=int,
         default=1,
@@ -113,6 +121,7 @@ def main():
         singularity_image=args.singularity_image,
         size=args.size,
         scale=args.scale,
+        initial_sky_model=args.initial_sky_model,
         gaincal_solint=args.gaincal_solint,
         gaincal_nchan=args.gaincal_nchan,
         clean_iters=args.clean_iters,

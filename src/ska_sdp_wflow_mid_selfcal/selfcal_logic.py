@@ -1,5 +1,5 @@
 import os
-from typing import Final, Iterator, Sequence
+from typing import Final, Iterator, Optional, Sequence
 
 from .logging_setup import LOGGER
 
@@ -93,12 +93,45 @@ def dp3_gaincal_command(
     ]
 
 
+def dp3_initial_gaincal_command(
+    msin: str,
+    msout: str,
+    *,
+    caltype: str,
+    sourcedb: str,
+    solint: int,
+    nchan: int,
+) -> CommandLine:
+    """
+    Generate a DP3 initial gain calibration command-line. It requires an
+    existing skymodel, and does *not* use the model column.
+    """
+    return [
+        "DP3",
+        f"msin={msin}",
+        f"msout={msout}",
+        "msout.overwrite=true",
+        "steps=[gaincal]",
+        f"gaincal.caltype={caltype}",
+        "gaincal.maxiter=50",
+        f"gaincal.solint={solint}",
+        f"gaincal.nchan={nchan}",
+        "gaincal.tolerance=1e-3",
+        "gaincal.propagatesolutions=false",
+        "gaincal.usebeammodel=true",
+        "gaincal.usechannelfreq=true",
+        "gaincal.applysolution=true",
+        f"gaincal.sourcedb={sourcedb}",
+    ]
+
+
 def command_line_generator(
     input_ms_list: list[str],
     *,
     outdir: str,
     size: tuple[int, int],
     scale: str,
+    initial_sky_model: Optional[str] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
     clean_iters: Sequence[int],
@@ -117,6 +150,8 @@ def command_line_generator(
     input_ms_list = [os.path.abspath(fname) for fname in input_ms_list]
     outdir = os.path.abspath(outdir)
     temporary_ms = os.path.join(outdir, TEMPORARY_MS)
+    if initial_sky_model:
+        initial_sky_model = os.path.abspath(initial_sky_model)
 
     # NOTE: minus one is deliberate, see docs for "clean_iters"
     num_cycles = len(clean_iters) - 1
@@ -128,6 +163,20 @@ def command_line_generator(
     # time to create a MODEL_DATA column for example)
     LOGGER.info("Merging input measurement sets into one")
     yield dp3_merge_command(input_ms_list, temporary_ms)
+
+    if initial_sky_model:
+        LOGGER.info(
+            "Running initial gain calibration using skymodel: "
+            f"{initial_sky_model}"
+        )
+        yield dp3_initial_gaincal_command(
+            temporary_ms,
+            temporary_ms,
+            caltype="diagonal",
+            sourcedb=initial_sky_model,
+            solint=gaincal_solint,
+            nchan=gaincal_nchan,
+        )
 
     for icycle in range(num_cycles):
         LOGGER.info(f"Starting Major Cycle {icycle + 1} / {num_cycles}")

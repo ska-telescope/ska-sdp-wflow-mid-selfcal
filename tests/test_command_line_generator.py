@@ -95,7 +95,60 @@ ONE_CYCLE = Scenario(
 )
 
 
-# Single selfcal cycle with phase calibration only, plus final imaging step
+# Initial calibration, single selfcal cycle with phase calibration only,
+# plus final imaging step
+ONE_CYCLE_WITH_INITIAL_CAL_INPUT_ARGS = {
+    "input_ms_list": ["/input/data.ms"],
+    "outdir": "/output/dir",
+    "size": (8192, 4096),
+    "scale": "1asec",
+    "initial_sky_model": "/input/skymodel.db",
+    "gaincal_solint": 3,
+    "gaincal_nchan": 5,
+    "clean_iters": (100, 200),
+    "phase_only_cycles": (0,),
+}
+
+ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
+    # Merge command
+    f"DP3 msin=[/input/data.ms] msout=/output/dir/{TEMPORARY_MS} steps=[]",
+    # Initial gaincal
+    f"DP3 msin=/output/dir/{TEMPORARY_MS} "
+    f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
+    "steps=[gaincal] gaincal.caltype=diagonal gaincal.maxiter=50 "
+    "gaincal.solint=3 gaincal.nchan=5 "
+    "gaincal.tolerance=1e-3 "
+    "gaincal.propagatesolutions=false gaincal.usebeammodel=true "
+    "gaincal.usechannelfreq=true gaincal.applysolution=true "
+    "gaincal.sourcedb=/input/skymodel.db ",
+    # cycle 1 imaging
+    "wsclean -size 8192 4096 -temp-dir /output/dir "
+    "-name temp01 -niter 100 -scale 1asec -gridder wgridder "
+    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
+    f"/output/dir/{TEMPORARY_MS}",
+    # phase-only gaincal
+    f"DP3 msin=/output/dir/{TEMPORARY_MS} "
+    f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
+    "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
+    "gaincal.solint=3 gaincal.nchan=5 "
+    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
+    "gaincal.applysolution=true",
+    # final image
+    "wsclean -size 8192 4096 "
+    "-temp-dir /output/dir -name final -niter 200 -scale 1asec "
+    "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
+    f"-parallel-deconvolution 2048 /output/dir/{TEMPORARY_MS}",
+]
+
+ONE_CYCLE_WITH_INITIAL_CAL = Scenario(
+    name="one selfcal cycle, with initial calibration",
+    input_args=ONE_CYCLE_WITH_INITIAL_CAL_INPUT_ARGS,
+    expected_command_lines=ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES,
+)
+
+
+# Single selfcal cycle with phase calibration only, plus final imaging step,
+# with input data stored as one MS per band
 ONE_CYCLE_MULTIPLE_MS_INPUT_ARGS = {
     "input_ms_list": ["/input/data01.ms", "/input/data02.ms"],
     "outdir": "/output/dir",
@@ -131,7 +184,7 @@ ONE_CYCLE_MULTIPLE_MS_COMMAND_LINES = [
 ]
 
 ONE_CYCLE_MULTIPLE_MS = Scenario(
-    name="one selfcal cycle, multiple measurement sets",
+    name="one selfcal cycle, with multiple input measurement sets",
     input_args=ONE_CYCLE_MULTIPLE_MS_INPUT_ARGS,
     expected_command_lines=ONE_CYCLE_MULTIPLE_MS_COMMAND_LINES,
 )
@@ -191,7 +244,13 @@ TWO_CYCLES = Scenario(
 )
 
 
-SCENARIOS = [IMAGE_ONLY, ONE_CYCLE, ONE_CYCLE_MULTIPLE_MS, TWO_CYCLES]
+SCENARIOS = [
+    IMAGE_ONLY,
+    ONE_CYCLE,
+    ONE_CYCLE_WITH_INITIAL_CAL,
+    ONE_CYCLE_MULTIPLE_MS,
+    TWO_CYCLES,
+]
 
 SCENARIO_NAMES = [scenario.name for scenario in SCENARIOS]
 

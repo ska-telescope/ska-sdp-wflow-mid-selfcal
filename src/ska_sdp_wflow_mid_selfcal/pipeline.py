@@ -2,7 +2,7 @@ import logging
 import shlex
 import signal
 import time
-from typing import Sequence
+from typing import Optional, Sequence
 
 from ._version import __version__
 from .change_dir import change_dir
@@ -21,6 +21,7 @@ def selfcal_pipeline(
     singularity_image: str,
     size: tuple[int, int],
     scale: str,
+    initial_sky_model: Optional[str] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
     clean_iters: Sequence[int] = (20, 100, 500, 500_000),
@@ -37,6 +38,8 @@ def selfcal_pipeline(
         size: size of the output image in pixels as an int tuple
             (width, height).
         scale: scale of a pixel, as a string such as "20asec" or "0.01deg".
+        initial_sky_model: Optional path to a DP3 sky model file to use for an
+            initial calibration, before the self-cal starts.
         gaincal_solint: number of time slots over which a gain solution is
             assumed to be constant. 0 means all time slots.
         gaincal_nchan: number of channels over which a gain solution is
@@ -50,19 +53,20 @@ def selfcal_pipeline(
     setup_exit_handler()
     try:
         LOGGER.info(f"Running version: {__version__}")
+        num_nodes = get_num_allocated_nodes()
+        LOGGER.info(f"Number of allocated nodes: {num_nodes}")
+
         generator = command_line_generator(
             input_ms_list,
             outdir=outdir,
             size=size,
             scale=scale,
+            initial_sky_model=initial_sky_model,
             gaincal_solint=gaincal_solint,
             gaincal_nchan=gaincal_nchan,
             clean_iters=clean_iters,
             phase_only_cycles=phase_only_cycles,
         )
-        num_nodes = get_num_allocated_nodes()
-        LOGGER.info(f"Number of allocated nodes: {num_nodes}")
-
         for base_cmd in generator:
             cmd = singularify(base_cmd, singularity_image)
             cmd = make_multi_node(cmd)

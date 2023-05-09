@@ -47,6 +47,24 @@ def parse_args() -> argparse.Namespace:
         help=('Scale of a pixel, as a string such as "20asec" or "0.01deg".'),
     )
     parser.add_argument(
+        "--gaincal-solint",
+        type=int,
+        default=1,
+        help=(
+            "gaincal.solint parameter for DP3: number of time slots over "
+            "which a solution is assumed to be constant"
+        ),
+    )
+    parser.add_argument(
+        "--gaincal-nchan",
+        type=int,
+        default=0,
+        help=(
+            "gaincal.nchan parameter for DP3: number of channels over "
+            "which a solution is assumed to be constant"
+        ),
+    )
+    parser.add_argument(
         "--clean-iters",
         nargs="+",
         type=int,
@@ -95,6 +113,8 @@ def main():
         singularity_image=args.singularity_image,
         size=args.size,
         scale=args.scale,
+        gaincal_solint=args.gaincal_solint,
+        gaincal_nchan=args.gaincal_nchan,
         clean_iters=args.clean_iters,
         phase_only_cycles=args.phase_only_cycles,
     )

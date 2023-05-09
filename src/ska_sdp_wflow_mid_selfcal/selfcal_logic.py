@@ -66,7 +66,14 @@ def dp3_merge_command(input_ms: list[str], msout: str) -> CommandLine:
     return ["DP3", f"msin={msin}", f"msout={msout}", "steps=[]"]
 
 
-def dp3_gaincal_command(msin: str, msout: str, *, caltype: str) -> CommandLine:
+def dp3_gaincal_command(
+    msin: str,
+    msout: str,
+    *,
+    caltype: str,
+    solint: int,
+    nchan: int,
+) -> CommandLine:
     """
     Generate a DP3 gain calibration command-line.
     """
@@ -78,6 +85,8 @@ def dp3_gaincal_command(msin: str, msout: str, *, caltype: str) -> CommandLine:
         "steps=[gaincal]",
         f"gaincal.caltype={caltype}",
         "gaincal.maxiter=50",
+        f"gaincal.solint={solint}",
+        f"gaincal.nchan={nchan}",
         "gaincal.tolerance=1e-3",
         "gaincal.usemodelcolumn=true",
         "gaincal.applysolution=true",
@@ -90,6 +99,8 @@ def command_line_generator(
     outdir: str,
     size: tuple[int, int],
     scale: str,
+    gaincal_solint: int = 1,
+    gaincal_nchan: int = 0,
     clean_iters: Sequence[int],
     phase_only_cycles: Sequence[int],
 ) -> Iterator[CommandLine]:
@@ -133,7 +144,13 @@ def command_line_generator(
         caltype = (
             "diagonalphase" if icycle in phase_only_cycles else "diagonal"
         )
-        yield dp3_gaincal_command(temporary_ms, temporary_ms, caltype=caltype)
+        yield dp3_gaincal_command(
+            temporary_ms,
+            temporary_ms,
+            caltype=caltype,
+            solint=gaincal_solint,
+            nchan=gaincal_nchan,
+        )
 
     LOGGER.info("Making final image")
     yield wsclean_command(

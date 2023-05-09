@@ -31,6 +31,8 @@ IMAGE_ONLY_INPUT_ARGS = {
     "outdir": "/output/dir",
     "size": (8192, 4096),
     "scale": "1asec",
+    "gaincal_solint": 3,
+    "gaincal_nchan": 5,
     "clean_iters": (100,),
     "phase_only_cycles": (0,),
 }
@@ -58,6 +60,8 @@ ONE_CYCLE_INPUT_ARGS = {
     "outdir": "/output/dir",
     "size": (8192, 4096),
     "scale": "1asec",
+    "gaincal_solint": 3,
+    "gaincal_nchan": 5,
     "clean_iters": (100, 200),
     "phase_only_cycles": (0,),
 }
@@ -74,6 +78,7 @@ ONE_CYCLE_EXPECTED_COMMAND_LINES = [
     f"DP3 msin=/output/dir/{TEMPORARY_MS} "
     f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
+    "gaincal.solint=3 gaincal.nchan=5 "
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
     "gaincal.applysolution=true",
     # final image
@@ -96,6 +101,8 @@ ONE_CYCLE_MULTIPLE_MS_INPUT_ARGS = {
     "outdir": "/output/dir",
     "size": (8192, 4096),
     "scale": "1asec",
+    "gaincal_solint": 3,
+    "gaincal_nchan": 5,
     "clean_iters": (100, 200),
     "phase_only_cycles": (0,),
 }
@@ -113,6 +120,7 @@ ONE_CYCLE_MULTIPLE_MS_COMMAND_LINES = [
     f"DP3 msin=/output/dir/{TEMPORARY_MS} "
     f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
+    "gaincal.solint=3 gaincal.nchan=5 "
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
     "gaincal.applysolution=true",
     # final image
@@ -136,6 +144,8 @@ TWO_CYCLES_INPUT_ARGS = {
     "outdir": "/output/dir",
     "size": (8192, 4096),
     "scale": "1asec",
+    "gaincal_solint": 3,
+    "gaincal_nchan": 5,
     "clean_iters": (100, 200, 300),
     "phase_only_cycles": (0,),
 }
@@ -152,6 +162,7 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     f"DP3 msin=/output/dir/{TEMPORARY_MS} "
     f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
+    "gaincal.solint=3 gaincal.nchan=5 "
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
     "gaincal.applysolution=true",
     # cycle 2 imaging
@@ -163,6 +174,7 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     f"DP3 msin=/output/dir/{TEMPORARY_MS} "
     f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonal gaincal.maxiter=50 "
+    "gaincal.solint=3 gaincal.nchan=5 "
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
     "gaincal.applysolution=true",
     # final image

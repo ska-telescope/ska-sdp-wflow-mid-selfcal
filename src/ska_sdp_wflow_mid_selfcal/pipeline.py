@@ -21,6 +21,8 @@ def selfcal_pipeline(
     singularity_image: str,
     size: tuple[int, int],
     scale: str,
+    gaincal_solint: int = 1,
+    gaincal_nchan: int = 0,
     clean_iters: Sequence[int] = (20, 100, 500, 500_000),
     phase_only_cycles: Sequence[int] = (0,),
 ) -> None:
@@ -35,6 +37,10 @@ def selfcal_pipeline(
         size: size of the output image in pixels as an int tuple
             (width, height).
         scale: scale of a pixel, as a string such as "20asec" or "0.01deg".
+        gaincal_solint: number of time slots over which a gain solution is
+            assumed to be constant. 0 means all time slots.
+        gaincal_nchan: number of channels over which a gain solution is
+            assumed to be constant. 0 means all channels.
         clean_iters: maximum Clean iterations per self-cal cycle. The number of
             calibration cycles is one less than the length of the list, as the
             final value is used to make the image after the last calibration.
@@ -49,6 +55,8 @@ def selfcal_pipeline(
             outdir=outdir,
             size=size,
             scale=scale,
+            gaincal_solint=gaincal_solint,
+            gaincal_nchan=gaincal_nchan,
             clean_iters=clean_iters,
             phase_only_cycles=phase_only_cycles,
         )

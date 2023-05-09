@@ -74,7 +74,8 @@ ONE_CYCLE_EXPECTED_COMMAND_LINES = [
     f"DP3 msin=/output/dir/{TEMPORARY_MS} "
     f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
-    "gaincal.usemodelcolumn=true gaincal.applysolution=true",
+    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
+    "gaincal.applysolution=true",
     # final image
     "wsclean -size 8192 4096 "
     "-temp-dir /output/dir -name final -niter 200 -scale 1asec "
@@ -112,7 +113,8 @@ ONE_CYCLE_MULTIPLE_MS_COMMAND_LINES = [
     f"DP3 msin=/output/dir/{TEMPORARY_MS} "
     f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
-    "gaincal.usemodelcolumn=true gaincal.applysolution=true",
+    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
+    "gaincal.applysolution=true",
     # final image
     "wsclean -size 8192 4096 -temp-dir /output/dir "
     "-name final -niter 200 -scale 1asec -gridder wgridder "
@@ -150,7 +152,8 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     f"DP3 msin=/output/dir/{TEMPORARY_MS} "
     f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
-    "gaincal.usemodelcolumn=true gaincal.applysolution=true",
+    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
+    "gaincal.applysolution=true",
     # cycle 2 imaging
     "wsclean -size 8192 4096 -temp-dir /output/dir "
     "-name temp02 -niter 200 -scale 1asec -gridder wgridder "
@@ -160,7 +163,8 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     f"DP3 msin=/output/dir/{TEMPORARY_MS} "
     f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonal gaincal.maxiter=50 "
-    "gaincal.usemodelcolumn=true gaincal.applysolution=true",
+    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
+    "gaincal.applysolution=true",
     # final image
     "wsclean -size 8192 4096 -temp-dir /output/dir "
     "-name final -niter 300 -scale 1asec -gridder wgridder "

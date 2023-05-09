@@ -78,6 +78,7 @@ def dp3_gaincal_command(msin: str, msout: str, *, caltype: str) -> CommandLine:
         "steps=[gaincal]",
         f"gaincal.caltype={caltype}",
         "gaincal.maxiter=50",
+        "gaincal.tolerance=1e-3",
         "gaincal.usemodelcolumn=true",
         "gaincal.applysolution=true",
     ]

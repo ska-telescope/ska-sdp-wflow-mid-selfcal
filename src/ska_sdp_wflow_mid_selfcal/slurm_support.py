@@ -39,15 +39,20 @@ def get_slurm_allocated_resources() -> SlurmResources:
     )
 
 
-def log_slurm_resources() -> None:
+def log_slurm_allocated_resources() -> None:
     """
     If running in a SLURM environment, log the resources allocated by the
     SLURM scheduler.
     """
     res = get_slurm_allocated_resources()
-    if any(val is None for val in (res.nodes, res.cpus, res.mem_mb)):
-        return  # not in a SLURM environment
 
-    LOGGER.info(f"SLURM allocated nodes: {res.nodes}")
-    LOGGER.info(f"SLURM allocated CPUs/node: {res.cpus}")
-    LOGGER.info(f"SLURM allocated RAM: {res.mem_mb} MB")
+    if res.nodes:
+        LOGGER.info(f"SLURM allocated nodes: {res.nodes}")
+
+    if res.cpus:
+        LOGGER.info(f"SLURM allocated CPUs/node: {res.cpus}")
+
+    # NOTE: On CSD3, the SLURM scheduler does not set $SLURM_MEM_PER_NODE
+    # unless the user has requested a specific amount of memory via e.g. --mem
+    if res.mem_mb:
+        LOGGER.info(f"SLURM allocated RAM: {res.mem_mb} MB")

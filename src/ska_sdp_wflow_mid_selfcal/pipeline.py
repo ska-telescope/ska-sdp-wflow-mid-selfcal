@@ -11,7 +11,7 @@ from .logging_setup import LOGGER, LOGGER_NAME
 from .multi_node_support import make_multi_node
 from .selfcal_logic import command_line_generator
 from .singularify import CommandLine, singularify
-from .slurm_support import log_slurm_resources
+from .slurm_support import log_slurm_allocated_resources
 from .stream_capture import check_call_with_stream_capture
 
 
@@ -54,7 +54,7 @@ def selfcal_pipeline(
     setup_exit_handler()
     try:
         LOGGER.info(f"Running version: {__version__}")
-        log_slurm_resources()
+        log_slurm_allocated_resources()
 
         generator = command_line_generator(
             input_ms_list,

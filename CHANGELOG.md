@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 0.2.3 - 2023-05-10
+
+### Added
+
+- Can now perform an initial calibration step before starting the self-calibration loop. This can be done by providing a file in sourcedb format via the optional argument `--initial-sky-model`.
+- Two DP3 gaincal parameters can now be tweaked from the command line via the optional arguments `--gaincal-solint` and `--gaincal-nchan`. The values provided are common to all calibration stages, including the optional initial calibration. If not provided, the DP3 default values are used.
+
+### Changed
+
+- `gaincal.tolerance` is now `1e-3` in all calibration stages, instead of the default `1e-5`.
+
+
 ## 0.2.2 - 2023-05-05
 
 ### Added

@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 0.2.4 - 2023-05-11
+
+This version contains minor improvements to make benchmarking easier.
+
+### Added
+
+- Pipeline app now logs the exact arguments with which it was called.
+- If running in a SLURM environment, the allocated compute resources are now logged before starting self-calibration: number of nodes, number of CPUs, amount of memory. The latter does not work reliably on CSD3 due to its SLURM scheduler not always setting the env variable `$SLURM_MEM_PER_NODE`.
+- The total bytesize of the input data is now logged before starting self-calibration.
+- It is now possible to provide an empty list to `--clean-iters`, which results in directly imaging the data without any self-calibration cycles.
+- It is now possible to provide an empty list to `--phase-only-cycles` as well.
+
+### Changed
+
+- Altered the definition of the `--clean-iters` argument. It still represents the number of deconvolution iterations to perform in each self-cal cycle, but now excludes the final imaging step, whose number of iterations is now hardcoded to 1 million (effectively, that means cleaning down to the noise). The number of actual self-cal cycles is now equal to the length of the `--clean-iters` list.
+
+
 ## 0.2.3 - 2023-05-10
 
 ### Added

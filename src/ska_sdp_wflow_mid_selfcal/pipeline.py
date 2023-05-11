@@ -47,9 +47,12 @@ def selfcal_pipeline(
             assumed to be constant. 0 means all channels.
         clean_iters: Maximum Clean iterations per self-cal cycle, as a list of
             integers. This does not include the final imaging stage where the
-            image is deconvolved down to the noise floor.
+            image is deconvolved down to the noise floor. To run only the final
+            imaging stage without selfcal, specify this argument without a
+            value.
         phase_only_cycles: sequence of self-cal cycle indices (zero-based) in
-            which to perform phase-only calibration.
+            which to perform phase-only calibration. To avoid doing any
+            phase-only cal cycles, specify this argument without a value.
     """
     setup_exit_handler()
     try:

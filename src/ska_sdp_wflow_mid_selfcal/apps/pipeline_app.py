@@ -74,24 +74,27 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--clean-iters",
-        nargs="+",
+        nargs="*",
         type=int,
         default=[20, 100, 500],
         help=(
             "Maximum Clean iterations per self-cal cycle, as a list of "
             "integers. This does not include the final imaging stage, "
-            "where the image is deconvolved down to the noise floor. "
+            "where the image is deconvolved down to the noise floor. To run "
+            "only the final imaging stage without selfcal, specify "
+            "this argument without a value."
         ),
     )
     parser.add_argument(
         "--phase-only-cycles",
-        nargs="+",
+        nargs="*",
         type=int,
         default=[0],
         help=(
             "List of self-cal cycle indices (zero-based) in which to perform "
             "phase-only calibration. A reasonable default is to run a "
-            "phase-only calibration for the first cycle."
+            "phase-only calibration for the first cycle. To avoid doing any "
+            "phase-only cal cycles, specify this argument without a value. "
         ),
     )
     parser.add_argument(

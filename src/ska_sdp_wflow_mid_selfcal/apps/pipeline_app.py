@@ -114,6 +114,10 @@ def main():
     logfile_path = os.path.join(outdir, "logfile.txt")
     setup_logging(logfile_path)
 
+    LOGGER.info("Called with: arguments")
+    for key, val in vars(args).items():
+        LOGGER.info(f"    {key}: {val}")
+
     LOGGER.info(f"Created output directory: {outdir!r}")
     selfcal_pipeline(
         args.input_ms,

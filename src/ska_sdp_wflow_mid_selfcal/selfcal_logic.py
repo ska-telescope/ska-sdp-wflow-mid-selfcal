@@ -19,6 +19,7 @@ def wsclean_command(
     niter: int,
     size: tuple[int, int],
     scale: str,
+    taper_gaussian: Optional[str] = None,
     gridder: str = "wgridder",
     auto_threshold: float = 3.0,
     mgain: float = 0.8,
@@ -48,9 +49,15 @@ def wsclean_command(
         "-parallel-deconvolution": parallel_deconvolution,
     }
 
+    if taper_gaussian is not None:
+        arg_dict.update(
+            {"-taper-gaussian": taper_gaussian, "-multiscale": None}
+        )
+
     for key, value in arg_dict.items():
         opt_list.append(key)
-        opt_list.append(str(value))
+        if value is not None:
+            opt_list.append(str(value))
 
     return ["wsclean", *opt_list, input_ms]
 
@@ -131,6 +138,7 @@ def command_line_generator(
     outdir: str,
     size: tuple[int, int],
     scale: str,
+    taper_gaussian: Optional[str] = None,
     initial_sky_model: Optional[str] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
@@ -178,6 +186,7 @@ def command_line_generator(
             temp_dir=outdir,
             size=size,
             scale=scale,
+            taper_gaussian=taper_gaussian,
             name=f"temp{icycle+1:02d}",
         )
 
@@ -199,5 +208,6 @@ def command_line_generator(
         temp_dir=outdir,
         size=size,
         scale=scale,
+        taper_gaussian=taper_gaussian,
         name="final",
     )

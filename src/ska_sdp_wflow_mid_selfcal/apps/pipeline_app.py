@@ -44,7 +44,16 @@ def parse_args() -> argparse.Namespace:
         "--scale",
         type=str,
         required=True,
-        help=('Scale of a pixel, as a string such as "20asec" or "0.01deg".'),
+        help="Scale of a pixel, as a string such as 20asec or 0.01deg",
+    )
+    parser.add_argument(
+        "--taper-gaussian",
+        type=str,
+        help=(
+            "Scale of an optional gaussian taper, as a string such as "
+            "20asec or 0.01deg. If specified, multiscale deconvolution "
+            "will be performed. "
+        ),
     )
     parser.add_argument(
         "--initial-sky-model",
@@ -127,6 +136,7 @@ def main():
         singularity_image=args.singularity_image,
         size=args.size,
         scale=args.scale,
+        taper_gaussian=args.taper_gaussian,
         initial_sky_model=args.initial_sky_model,
         gaincal_solint=args.gaincal_solint,
         gaincal_nchan=args.gaincal_nchan,

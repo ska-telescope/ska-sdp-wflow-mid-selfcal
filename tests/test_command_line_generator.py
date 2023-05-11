@@ -155,6 +155,48 @@ ONE_CYCLE_WITH_INITIAL_CAL = Scenario(
 )
 
 
+# Single selfcal cycle with phase calibration only, plus final imaging step
+ONE_CYCLE_WITH_TAPER_INPUT_ARGS = {
+    "input_ms": "/input/data.ms",
+    "outdir": "/output/dir",
+    "size": (8192, 4096),
+    "scale": "1asec",
+    "taper_gaussian": "8asec",
+    "gaincal_solint": 3,
+    "gaincal_nchan": 5,
+    "clean_iters": (100,),
+    "phase_only_cycles": (0,),
+}
+
+ONE_CYCLE_WITH_TAPER_EXPECTED_COMMAND_LINES = [
+    # cycle 1 imaging
+    "wsclean -size 8192 4096 -temp-dir /output/dir "
+    "-name temp01 -niter 100 -scale 1asec -gridder wgridder "
+    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
+    "-taper-gaussian 8asec "
+    "/input/data.ms",
+    # phase-only gaincal
+    "DP3 msin=/input/data.ms "
+    "msout=/input/data.ms msout.overwrite=true "
+    "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
+    "gaincal.solint=3 gaincal.nchan=5 "
+    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
+    "gaincal.applysolution=true",
+    # final image
+    "wsclean -size 8192 4096 "
+    "-temp-dir /output/dir -name final -niter 1000000 -scale 1asec "
+    "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
+    "-parallel-deconvolution 2048 -taper-gaussian 8asec -multiscale "
+    "/input/data.ms",
+]
+
+ONE_CYCLE_WITH_TAPER = Scenario(
+    name="one selfcal cycle, with gaussian taper",
+    input_args=ONE_CYCLE_INPUT_ARGS,
+    expected_command_lines=ONE_CYCLE_EXPECTED_COMMAND_LINES,
+)
+
+
 # Single calibration loop two cycles: first one with only phase calibration,
 # second one with phase and amplitude, plus final imaging step.
 TWO_CYCLES_INPUT_ARGS = {
@@ -211,6 +253,7 @@ SCENARIOS = [
     IMAGE_ONLY,
     ONE_CYCLE,
     ONE_CYCLE_WITH_INITIAL_CAL,
+    ONE_CYCLE_WITH_TAPER,
     TWO_CYCLES,
 ]
 

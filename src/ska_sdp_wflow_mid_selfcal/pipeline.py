@@ -29,6 +29,7 @@ def selfcal_pipeline(
     singularity_image: str,
     size: tuple[int, int],
     scale: str,
+    taper_gaussian: Optional[str] = None,
     initial_sky_model: Optional[str] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
@@ -46,6 +47,9 @@ def selfcal_pipeline(
         size: size of the output image in pixels as an int tuple
             (width, height).
         scale: scale of a pixel, as a string such as "20asec" or "0.01deg".
+        taper_gaussian: Scale of an optional gaussian taper, as a string such
+            as "20asec" or "0.01deg". If specified, multiscale deconvolution
+            will be performed.
         initial_sky_model: Optional path to a DP3 sky model file to use for an
             initial calibration, before the self-cal starts.
         gaincal_solint: number of time slots over which a gain solution is
@@ -85,6 +89,7 @@ def selfcal_pipeline(
             outdir=outdir,
             size=size,
             scale=scale,
+            taper_gaussian=taper_gaussian,
             initial_sky_model=initial_sky_model,
             gaincal_solint=gaincal_solint,
             gaincal_nchan=gaincal_nchan,

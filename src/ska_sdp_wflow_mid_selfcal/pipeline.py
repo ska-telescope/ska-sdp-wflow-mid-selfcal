@@ -2,6 +2,7 @@ import logging
 import os
 import shlex
 import signal
+import subprocess
 import time
 from typing import Optional, Sequence
 
@@ -75,6 +76,8 @@ def selfcal_pipeline(
         run_command_line_in_workdir(
             singularify(merge_cmd, singularity_image), outdir
         )
+
+        LOGGER.info(f"Input size in bytes: {get_bytesize(temporary_ms)}")
 
         # From there, perform self-cal in place on the merged MS
         generator = command_line_generator(
@@ -151,6 +154,16 @@ def run_command_line_in_workdir(cmd: CommandLine, workdir: str) -> None:
     """
     with change_dir(workdir):
         run_command_line(cmd)
+
+
+def get_bytesize(path: str) -> int:
+    """
+    Get the total size that a file or directory occupies on disk,
+    as reported by `du`.
+    """
+    output = subprocess.check_output(["du", "-bs", path])
+    bytesize_str, __ = output.split()
+    return int(bytesize_str)
 
 
 def _get_program_name(cmd: CommandLine) -> str:

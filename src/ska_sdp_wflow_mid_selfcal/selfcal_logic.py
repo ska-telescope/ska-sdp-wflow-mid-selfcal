@@ -153,8 +153,7 @@ def command_line_generator(
     if initial_sky_model:
         initial_sky_model = os.path.abspath(initial_sky_model)
 
-    # NOTE: minus one is deliberate, see docs for "clean_iters"
-    num_cycles = len(clean_iters) - 1
+    num_cycles = len(clean_iters)
 
     # Merge all input MSes into one, because DP3's gaincal can only operate on
     # a single input MS. We do this even if there's only one input MS, because
@@ -204,7 +203,7 @@ def command_line_generator(
     LOGGER.info("Making final image")
     yield wsclean_command(
         temporary_ms,
-        niter=clean_iters[-1],
+        niter=1_000_000,
         temp_dir=outdir,
         size=size,
         scale=scale,

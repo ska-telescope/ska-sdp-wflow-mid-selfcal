@@ -45,9 +45,9 @@ def selfcal_pipeline(
             assumed to be constant. 0 means all time slots.
         gaincal_nchan: number of channels over which a gain solution is
             assumed to be constant. 0 means all channels.
-        clean_iters: maximum Clean iterations per self-cal cycle. The number of
-            calibration cycles is one less than the length of the list, as the
-            final value is used to make the image after the last calibration.
+        clean_iters: Maximum Clean iterations per self-cal cycle, as a list of
+            integers. This does not include the final imaging stage where the
+            image is deconvolved down to the noise floor.
         phase_only_cycles: sequence of self-cal cycle indices (zero-based) in
             which to perform phase-only calibration.
     """

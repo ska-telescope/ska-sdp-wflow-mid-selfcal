@@ -76,12 +76,11 @@ def parse_args() -> argparse.Namespace:
         "--clean-iters",
         nargs="+",
         type=int,
-        default=[20, 100, 500, 500_000],
+        default=[20, 100, 500],
         help=(
             "Maximum Clean iterations per self-cal cycle, as a list of "
-            "integers. The number of calibration cycles is one less than the "
-            "length of the list, as the final value is used to make the image "
-            "after the last calibration."
+            "integers. This does not include the final imaging stage, "
+            "where the image is deconvolved down to the noise floor. "
         ),
     )
     parser.add_argument(

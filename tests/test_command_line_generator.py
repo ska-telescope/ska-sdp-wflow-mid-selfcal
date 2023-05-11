@@ -24,8 +24,7 @@ class Scenario:
 
 
 # A scenario without any self-calibration cycles, just making the final image
-# directly. This can be done by specifying "clean_iters" as a list/tuple
-# containing just one value.
+# directly. This can be done by specifying "clean_iters" as an empty sequence.
 IMAGE_ONLY_INPUT_ARGS = {
     "input_ms_list": ["/input/data.ms"],
     "outdir": "/output/dir",
@@ -33,7 +32,7 @@ IMAGE_ONLY_INPUT_ARGS = {
     "scale": "1asec",
     "gaincal_solint": 3,
     "gaincal_nchan": 5,
-    "clean_iters": (100,),
+    "clean_iters": (),
     "phase_only_cycles": (0,),
 }
 
@@ -42,7 +41,7 @@ IMAGE_ONLY_EXPECTED_COMMAND_LINES = [
     f"DP3 msin=[/input/data.ms] msout=/output/dir/{TEMPORARY_MS} steps=[]",
     # Just one imaging step
     "wsclean -size 8192 4096 -temp-dir /output/dir "
-    "-name final -niter 100 -scale 1asec -gridder wgridder "
+    "-name final -niter 1000000 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     f"/output/dir/{TEMPORARY_MS}",
 ]
@@ -62,7 +61,7 @@ ONE_CYCLE_INPUT_ARGS = {
     "scale": "1asec",
     "gaincal_solint": 3,
     "gaincal_nchan": 5,
-    "clean_iters": (100, 200),
+    "clean_iters": (100,),
     "phase_only_cycles": (0,),
 }
 
@@ -83,7 +82,7 @@ ONE_CYCLE_EXPECTED_COMMAND_LINES = [
     "gaincal.applysolution=true",
     # final image
     "wsclean -size 8192 4096 "
-    "-temp-dir /output/dir -name final -niter 200 -scale 1asec "
+    "-temp-dir /output/dir -name final -niter 1000000 -scale 1asec "
     "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
     f"-parallel-deconvolution 2048 /output/dir/{TEMPORARY_MS}",
 ]
@@ -105,7 +104,7 @@ ONE_CYCLE_WITH_INITIAL_CAL_INPUT_ARGS = {
     "initial_sky_model": "/input/skymodel.db",
     "gaincal_solint": 3,
     "gaincal_nchan": 5,
-    "clean_iters": (100, 200),
+    "clean_iters": (100,),
     "phase_only_cycles": (0,),
 }
 
@@ -135,7 +134,7 @@ ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
     "gaincal.applysolution=true",
     # final image
     "wsclean -size 8192 4096 "
-    "-temp-dir /output/dir -name final -niter 200 -scale 1asec "
+    "-temp-dir /output/dir -name final -niter 1000000 -scale 1asec "
     "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
     f"-parallel-deconvolution 2048 /output/dir/{TEMPORARY_MS}",
 ]
@@ -156,7 +155,7 @@ ONE_CYCLE_MULTIPLE_MS_INPUT_ARGS = {
     "scale": "1asec",
     "gaincal_solint": 3,
     "gaincal_nchan": 5,
-    "clean_iters": (100, 200),
+    "clean_iters": (100,),
     "phase_only_cycles": (0,),
 }
 
@@ -178,7 +177,7 @@ ONE_CYCLE_MULTIPLE_MS_COMMAND_LINES = [
     "gaincal.applysolution=true",
     # final image
     "wsclean -size 8192 4096 -temp-dir /output/dir "
-    "-name final -niter 200 -scale 1asec -gridder wgridder "
+    "-name final -niter 1000000 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     f"/output/dir/{TEMPORARY_MS}",
 ]
@@ -199,7 +198,7 @@ TWO_CYCLES_INPUT_ARGS = {
     "scale": "1asec",
     "gaincal_solint": 3,
     "gaincal_nchan": 5,
-    "clean_iters": (100, 200, 300),
+    "clean_iters": (100, 200),
     "phase_only_cycles": (0,),
 }
 
@@ -232,7 +231,7 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     "gaincal.applysolution=true",
     # final image
     "wsclean -size 8192 4096 -temp-dir /output/dir "
-    "-name final -niter 300 -scale 1asec -gridder wgridder "
+    "-name final -niter 1000000 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     f"/output/dir/{TEMPORARY_MS}",
 ]

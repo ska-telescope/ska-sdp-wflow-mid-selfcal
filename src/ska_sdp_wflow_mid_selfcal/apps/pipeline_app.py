@@ -116,7 +116,7 @@ def main():
     logfile_path = os.path.join(outdir, "logfile.txt")
     setup_logging(logfile_path)
 
-    LOGGER.info("Called with: arguments")
+    LOGGER.info("Called with arguments:")
     for key, val in vars(args).items():
         LOGGER.info(f"    {key}: {val}")
 

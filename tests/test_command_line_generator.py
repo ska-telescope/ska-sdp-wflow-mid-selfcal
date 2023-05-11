@@ -3,8 +3,23 @@ from dataclasses import dataclass
 
 import pytest
 
-from ska_sdp_wflow_mid_selfcal.pipeline import command_line_generator
-from ska_sdp_wflow_mid_selfcal.selfcal_logic import TEMPORARY_MS
+from ska_sdp_wflow_mid_selfcal.pipeline import (
+    command_line_generator,
+    dp3_merge_command,
+)
+
+
+def test_dp3_merge_command():
+    """
+    Self-explanatory.
+    """
+    input_ms_list = ["/input/data01.ms", "/input/data02.ms"]
+    msout = "/output/merged.ms"
+    expected_cmd = (
+        "DP3 msin=[/input/data01.ms,/input/data02.ms] msout=/output/merged.ms "
+        "steps=[]"
+    )
+    assert dp3_merge_command(input_ms_list, msout) == shlex.split(expected_cmd)
 
 
 @dataclass
@@ -26,7 +41,7 @@ class Scenario:
 # A scenario without any self-calibration cycles, just making the final image
 # directly. This can be done by specifying "clean_iters" as an empty sequence.
 IMAGE_ONLY_INPUT_ARGS = {
-    "input_ms_list": ["/input/data.ms"],
+    "input_ms": "/input/data.ms",
     "outdir": "/output/dir",
     "size": (8192, 4096),
     "scale": "1asec",
@@ -37,13 +52,11 @@ IMAGE_ONLY_INPUT_ARGS = {
 }
 
 IMAGE_ONLY_EXPECTED_COMMAND_LINES = [
-    # Merge command
-    f"DP3 msin=[/input/data.ms] msout=/output/dir/{TEMPORARY_MS} steps=[]",
     # Just one imaging step
     "wsclean -size 8192 4096 -temp-dir /output/dir "
     "-name final -niter 1000000 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    f"/output/dir/{TEMPORARY_MS}",
+    "/input/data.ms",
 ]
 
 IMAGE_ONLY = Scenario(
@@ -55,7 +68,7 @@ IMAGE_ONLY = Scenario(
 
 # Single selfcal cycle with phase calibration only, plus final imaging step
 ONE_CYCLE_INPUT_ARGS = {
-    "input_ms_list": ["/input/data.ms"],
+    "input_ms": "/input/data.ms",
     "outdir": "/output/dir",
     "size": (8192, 4096),
     "scale": "1asec",
@@ -66,16 +79,14 @@ ONE_CYCLE_INPUT_ARGS = {
 }
 
 ONE_CYCLE_EXPECTED_COMMAND_LINES = [
-    # Merge command
-    f"DP3 msin=[/input/data.ms] msout=/output/dir/{TEMPORARY_MS} steps=[]",
     # cycle 1 imaging
     "wsclean -size 8192 4096 -temp-dir /output/dir "
     "-name temp01 -niter 100 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    f"/output/dir/{TEMPORARY_MS}",
+    "/input/data.ms",
     # phase-only gaincal
-    f"DP3 msin=/output/dir/{TEMPORARY_MS} "
-    f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
+    "DP3 msin=/input/data.ms "
+    "msout=/input/data.ms msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
     "gaincal.solint=3 gaincal.nchan=5 "
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
@@ -84,7 +95,7 @@ ONE_CYCLE_EXPECTED_COMMAND_LINES = [
     "wsclean -size 8192 4096 "
     "-temp-dir /output/dir -name final -niter 1000000 -scale 1asec "
     "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
-    f"-parallel-deconvolution 2048 /output/dir/{TEMPORARY_MS}",
+    "-parallel-deconvolution 2048 /input/data.ms",
 ]
 
 ONE_CYCLE = Scenario(
@@ -97,7 +108,7 @@ ONE_CYCLE = Scenario(
 # Initial calibration, single selfcal cycle with phase calibration only,
 # plus final imaging step
 ONE_CYCLE_WITH_INITIAL_CAL_INPUT_ARGS = {
-    "input_ms_list": ["/input/data.ms"],
+    "input_ms": "/input/data.ms",
     "outdir": "/output/dir",
     "size": (8192, 4096),
     "scale": "1asec",
@@ -109,11 +120,9 @@ ONE_CYCLE_WITH_INITIAL_CAL_INPUT_ARGS = {
 }
 
 ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
-    # Merge command
-    f"DP3 msin=[/input/data.ms] msout=/output/dir/{TEMPORARY_MS} steps=[]",
     # Initial gaincal
-    f"DP3 msin=/output/dir/{TEMPORARY_MS} "
-    f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
+    "DP3 msin=/input/data.ms "
+    "msout=/input/data.ms msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonal gaincal.maxiter=50 "
     "gaincal.solint=3 gaincal.nchan=5 "
     "gaincal.tolerance=1e-3 "
@@ -124,10 +133,10 @@ ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
     "wsclean -size 8192 4096 -temp-dir /output/dir "
     "-name temp01 -niter 100 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    f"/output/dir/{TEMPORARY_MS}",
+    "/input/data.ms",
     # phase-only gaincal
-    f"DP3 msin=/output/dir/{TEMPORARY_MS} "
-    f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
+    "DP3 msin=/input/data.ms "
+    "msout=/input/data.ms msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
     "gaincal.solint=3 gaincal.nchan=5 "
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
@@ -136,7 +145,7 @@ ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
     "wsclean -size 8192 4096 "
     "-temp-dir /output/dir -name final -niter 1000000 -scale 1asec "
     "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
-    f"-parallel-deconvolution 2048 /output/dir/{TEMPORARY_MS}",
+    "-parallel-deconvolution 2048 /input/data.ms",
 ]
 
 ONE_CYCLE_WITH_INITIAL_CAL = Scenario(
@@ -146,53 +155,10 @@ ONE_CYCLE_WITH_INITIAL_CAL = Scenario(
 )
 
 
-# Single selfcal cycle with phase calibration only, plus final imaging step,
-# with input data stored as one MS per band
-ONE_CYCLE_MULTIPLE_MS_INPUT_ARGS = {
-    "input_ms_list": ["/input/data01.ms", "/input/data02.ms"],
-    "outdir": "/output/dir",
-    "size": (8192, 4096),
-    "scale": "1asec",
-    "gaincal_solint": 3,
-    "gaincal_nchan": 5,
-    "clean_iters": (100,),
-    "phase_only_cycles": (0,),
-}
-
-ONE_CYCLE_MULTIPLE_MS_COMMAND_LINES = [
-    # Merge command
-    f"DP3 msin=[/input/data01.ms,/input/data02.ms] "
-    f"msout=/output/dir/{TEMPORARY_MS} steps=[]",
-    # cycle 1 imaging
-    "wsclean -size 8192 4096 -temp-dir /output/dir "
-    "-name temp01 -niter 100 -scale 1asec -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    f"/output/dir/{TEMPORARY_MS}",
-    # phase-only gaincal
-    f"DP3 msin=/output/dir/{TEMPORARY_MS} "
-    f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
-    "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
-    "gaincal.solint=3 gaincal.nchan=5 "
-    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
-    "gaincal.applysolution=true",
-    # final image
-    "wsclean -size 8192 4096 -temp-dir /output/dir "
-    "-name final -niter 1000000 -scale 1asec -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    f"/output/dir/{TEMPORARY_MS}",
-]
-
-ONE_CYCLE_MULTIPLE_MS = Scenario(
-    name="one selfcal cycle, with multiple input measurement sets",
-    input_args=ONE_CYCLE_MULTIPLE_MS_INPUT_ARGS,
-    expected_command_lines=ONE_CYCLE_MULTIPLE_MS_COMMAND_LINES,
-)
-
-
 # Single calibration loop two cycles: first one with only phase calibration,
 # second one with phase and amplitude, plus final imaging step.
 TWO_CYCLES_INPUT_ARGS = {
-    "input_ms_list": ["/input/data.ms"],
+    "input_ms": "/input/data.ms",
     "outdir": "/output/dir",
     "size": (8192, 4096),
     "scale": "1asec",
@@ -203,16 +169,14 @@ TWO_CYCLES_INPUT_ARGS = {
 }
 
 TWO_CYCLES_EXPECTED_COMMAND_LINES = [
-    # Merge command
-    f"DP3 msin=[/input/data.ms] msout=/output/dir/{TEMPORARY_MS} steps=[]",
     # cycle 1 imaging
     "wsclean -size 8192 4096 -temp-dir /output/dir "
     "-name temp01 -niter 100 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    f"/output/dir/{TEMPORARY_MS}",
+    "/input/data.ms",
     # phase-only gaincal
-    f"DP3 msin=/output/dir/{TEMPORARY_MS} "
-    f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
+    "DP3 msin=/input/data.ms "
+    "msout=/input/data.ms msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
     "gaincal.solint=3 gaincal.nchan=5 "
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
@@ -221,10 +185,10 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     "wsclean -size 8192 4096 -temp-dir /output/dir "
     "-name temp02 -niter 200 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    f"/output/dir/{TEMPORARY_MS}",
+    "/input/data.ms",
     # gaincal, both phase and amplitude
-    f"DP3 msin=/output/dir/{TEMPORARY_MS} "
-    f"msout=/output/dir/{TEMPORARY_MS} msout.overwrite=true "
+    "DP3 msin=/input/data.ms "
+    "msout=/input/data.ms msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonal gaincal.maxiter=50 "
     "gaincal.solint=3 gaincal.nchan=5 "
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
@@ -233,7 +197,7 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     "wsclean -size 8192 4096 -temp-dir /output/dir "
     "-name final -niter 1000000 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    f"/output/dir/{TEMPORARY_MS}",
+    "/input/data.ms",
 ]
 
 TWO_CYCLES = Scenario(
@@ -247,7 +211,6 @@ SCENARIOS = [
     IMAGE_ONLY,
     ONE_CYCLE,
     ONE_CYCLE_WITH_INITIAL_CAL,
-    ONE_CYCLE_MULTIPLE_MS,
     TWO_CYCLES,
 ]
 

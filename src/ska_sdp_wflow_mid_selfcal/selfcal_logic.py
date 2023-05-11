@@ -126,7 +126,7 @@ def dp3_initial_gaincal_command(
 
 
 def command_line_generator(
-    input_ms_list: list[str],
+    input_ms: str,
     *,
     outdir: str,
     size: tuple[int, int],
@@ -147,21 +147,13 @@ def command_line_generator(
     where they are called. Also, the code that transforms bare-metal commands
     into singularity commands needs all paths to be absolute.
     """
-    input_ms_list = [os.path.abspath(fname) for fname in input_ms_list]
+    input_ms = os.path.abspath(input_ms)
     outdir = os.path.abspath(outdir)
-    temporary_ms = os.path.join(outdir, TEMPORARY_MS)
+
     if initial_sky_model:
         initial_sky_model = os.path.abspath(initial_sky_model)
 
     num_cycles = len(clean_iters)
-
-    # Merge all input MSes into one, because DP3's gaincal can only operate on
-    # a single input MS. We do this even if there's only one input MS, because
-    # that gives us a fresh MS with only the DATA column, and thus run times
-    # representative of a production system (where one would have to take the
-    # time to create a MODEL_DATA column for example)
-    LOGGER.info("Merging input measurement sets into one")
-    yield dp3_merge_command(input_ms_list, temporary_ms)
 
     if initial_sky_model:
         LOGGER.info(
@@ -169,8 +161,8 @@ def command_line_generator(
             f"{initial_sky_model}"
         )
         yield dp3_initial_gaincal_command(
-            temporary_ms,
-            temporary_ms,
+            input_ms,
+            input_ms,
             caltype="diagonal",
             sourcedb=initial_sky_model,
             solint=gaincal_solint,
@@ -181,7 +173,7 @@ def command_line_generator(
         LOGGER.info(f"Starting Major Cycle {icycle + 1} / {num_cycles}")
 
         yield wsclean_command(
-            temporary_ms,
+            input_ms,
             niter=clean_iters[icycle],
             temp_dir=outdir,
             size=size,
@@ -193,8 +185,8 @@ def command_line_generator(
             "diagonalphase" if icycle in phase_only_cycles else "diagonal"
         )
         yield dp3_gaincal_command(
-            temporary_ms,
-            temporary_ms,
+            input_ms,
+            input_ms,
             caltype=caltype,
             solint=gaincal_solint,
             nchan=gaincal_nchan,
@@ -202,7 +194,7 @@ def command_line_generator(
 
     LOGGER.info("Making final image")
     yield wsclean_command(
-        temporary_ms,
+        input_ms,
         niter=1_000_000,
         temp_dir=outdir,
         size=size,

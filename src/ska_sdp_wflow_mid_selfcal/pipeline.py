@@ -1,4 +1,5 @@
 import logging
+import os
 import shlex
 import signal
 import time
@@ -9,12 +10,17 @@ from .change_dir import change_dir
 from .cleanup import cleanup
 from .logging_setup import LOGGER, LOGGER_NAME
 from .multi_node_support import make_multi_node
-from .selfcal_logic import command_line_generator
+from .selfcal_logic import (
+    TEMPORARY_MS,
+    command_line_generator,
+    dp3_merge_command,
+)
 from .singularify import CommandLine, singularify
 from .slurm_support import log_slurm_allocated_resources
 from .stream_capture import check_call_with_stream_capture
 
 
+# pylint: disable=too-many-locals
 def selfcal_pipeline(
     input_ms_list: list[str],
     *,
@@ -59,8 +65,20 @@ def selfcal_pipeline(
         LOGGER.info(f"Running version: {__version__}")
         log_slurm_allocated_resources()
 
+        # Merge all input MSes into one, because DP3's gaincal can only operate
+        # on a single input MS. We do this even if there's only one input MS,
+        # to guarantee we get a fresh new MS without pre-existing MODEL_DATA.
+        # That will give run times more representative of a production system.
+        LOGGER.info("Merging input measurement sets into one")
+        temporary_ms = os.path.join(outdir, TEMPORARY_MS)
+        merge_cmd = dp3_merge_command(input_ms_list, temporary_ms)
+        run_command_line_in_workdir(
+            singularify(merge_cmd, singularity_image), outdir
+        )
+
+        # From there, perform self-cal in place on the merged MS
         generator = command_line_generator(
-            input_ms_list,
+            temporary_ms,
             outdir=outdir,
             size=size,
             scale=scale,

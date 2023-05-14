@@ -14,9 +14,17 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 mid-selfcal-pipeline = "ska_sdp_wflow_mid_selfcal.apps.pipeline_app:main"
+mid-selfcal-fits2png = "ska_sdp_wflow_mid_selfcal.apps.fits2png:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+numpy = "^1.22"
+matplotlib = "^3.0"
+
+# With astropy 4.x we run into this issue with markupsafe:
+# https://stackoverflow.com/q/72191560
+# Pinning markupsafe==2.0.1 does not work
+astropy = "^5.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"

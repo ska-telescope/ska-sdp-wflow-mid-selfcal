@@ -5,5 +5,5 @@ The Infiniband network interfaces on the CSD3 icelake nodes do not support sendi
 As a temporary fix, we build a docker image with a modified `mpibig.cpp` file where messages are split into 1 GB chunks instead. To build the Dockerfile:
 ```
 cd docker/
-docker build -f Dockerfile-MPI --tag <MY_IMAGE_TAG> .
+docker build -f Dockerfile --tag <MY_IMAGE_TAG> .
 ```

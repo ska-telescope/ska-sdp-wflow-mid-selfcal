@@ -19,6 +19,7 @@ def wsclean_command(
     niter: int,
     size: tuple[int, int],
     scale: str,
+    weight: str = "uniform",
     gridder: str = "wgridder",
     auto_threshold: float = 3.0,
     mgain: float = 0.8,
@@ -42,6 +43,7 @@ def wsclean_command(
         "-name": name,
         "-niter": niter,
         "-scale": scale,
+        "-weight": weight,
         "-gridder": gridder,
         "-auto-threshold": auto_threshold,
         "-mgain": mgain,
@@ -178,6 +180,9 @@ def command_line_generator(
     for icycle in range(num_cycles):
         LOGGER.info(f"Starting Major Cycle {icycle + 1} / {num_cycles}")
 
+        # NOTE: Use natural weighting to smooth out the PSFs when dealing
+        # with a few sparse long baselines (e.g. AA2). That way we avoid
+        # picking up pixels from sidelobes of bright sources in our model.
         yield wsclean_command(
             input_ms,
             niter=clean_iters[icycle],
@@ -185,6 +190,7 @@ def command_line_generator(
             size=size,
             scale=scale,
             name=f"temp{icycle+1:02d}",
+            weight="natural",
         )
 
         caltype = (
@@ -198,6 +204,7 @@ def command_line_generator(
             nchan=gaincal_nchan,
         )
 
+    # NOTE: Use uniform weighting for final stage though.
     LOGGER.info("Making final image")
     yield wsclean_command(
         input_ms,
@@ -206,4 +213,5 @@ def command_line_generator(
         size=size,
         scale=scale,
         name="final",
+        weight="uniform",
     )

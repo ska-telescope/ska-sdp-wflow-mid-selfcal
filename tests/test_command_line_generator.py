@@ -85,7 +85,7 @@ ONE_CYCLE_EXPECTED_COMMAND_LINES = [
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",
     # phase-only gaincal
-    "DP3 msin=/input/data.ms "
+    "DP3 numthreads=16 msin=/input/data.ms "
     "msout=/input/data.ms msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
     "gaincal.solint=3 gaincal.nchan=5 "
@@ -121,7 +121,7 @@ ONE_CYCLE_WITH_INITIAL_CAL_INPUT_ARGS = {
 
 ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
     # Initial gaincal
-    "DP3 msin=/input/data.ms "
+    "DP3  numthreads=16 msin=/input/data.ms "
     "msout=/input/data.ms msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonal gaincal.maxiter=50 "
     "gaincal.solint=3 gaincal.nchan=5 "
@@ -135,7 +135,7 @@ ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",
     # phase-only gaincal
-    "DP3 msin=/input/data.ms "
+    "DP3 numthreads=16 msin=/input/data.ms "
     "msout=/input/data.ms msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
     "gaincal.solint=3 gaincal.nchan=5 "
@@ -175,7 +175,7 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",
     # phase-only gaincal
-    "DP3 msin=/input/data.ms "
+    "DP3 numthreads=16 msin=/input/data.ms "
     "msout=/input/data.ms msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
     "gaincal.solint=3 gaincal.nchan=5 "
@@ -187,7 +187,7 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",
     # gaincal, both phase and amplitude
-    "DP3 msin=/input/data.ms "
+    "DP3 numthreads=16 msin=/input/data.ms "
     "msout=/input/data.ms msout.overwrite=true "
     "steps=[gaincal] gaincal.caltype=diagonal gaincal.maxiter=50 "
     "gaincal.solint=3 gaincal.nchan=5 "

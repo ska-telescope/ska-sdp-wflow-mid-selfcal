@@ -77,8 +77,11 @@ def dp3_gaincal_command(
     """
     Generate a DP3 gain calibration command-line.
     """
+    # NOTE: DP3 numthreads MUST be capped to a value <= 63. Otherwise, gaincal
+    # may hang indefinitely on a machine with 64 cores or more.
     return [
         "DP3",
+        "numthreads=16",
         f"msin={msin}",
         f"msout={msout}",
         "msout.overwrite=true",
@@ -106,8 +109,11 @@ def dp3_initial_gaincal_command(
     Generate a DP3 initial gain calibration command-line. It requires an
     existing skymodel, and does *not* use the model column.
     """
+    # NOTE: DP3 numthreads MUST be capped to a value <= 63. Otherwise, gaincal
+    # may hang indefinitely on a machine with 64 cores or more.
     return [
         "DP3",
+        "numthreads=16",
         f"msin={msin}",
         f"msout={msout}",
         "msout.overwrite=true",

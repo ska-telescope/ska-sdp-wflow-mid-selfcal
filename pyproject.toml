@@ -15,6 +15,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 mid-selfcal-pipeline = "ska_sdp_wflow_mid_selfcal.apps.pipeline_app:main"
 mid-selfcal-fits2png = "ska_sdp_wflow_mid_selfcal.apps.fits2png:main"
+mid-selfcal-logparse = "ska_sdp_wflow_mid_selfcal.apps.logparse:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"

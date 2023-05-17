@@ -54,7 +54,7 @@ IMAGE_ONLY_INPUT_ARGS = {
 IMAGE_ONLY_EXPECTED_COMMAND_LINES = [
     # Just one imaging step
     "wsclean -size 8192 4096 -temp-dir /output/dir "
-    "-name final -niter 1000000 -scale 1asec -gridder wgridder "
+    "-name final -niter 100000 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",
 ]
@@ -93,7 +93,7 @@ ONE_CYCLE_EXPECTED_COMMAND_LINES = [
     "gaincal.applysolution=true",
     # final image
     "wsclean -size 8192 4096 "
-    "-temp-dir /output/dir -name final -niter 1000000 -scale 1asec "
+    "-temp-dir /output/dir -name final -niter 100000 -scale 1asec "
     "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
     "-parallel-deconvolution 2048 /input/data.ms",
 ]
@@ -143,7 +143,7 @@ ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
     "gaincal.applysolution=true",
     # final image
     "wsclean -size 8192 4096 "
-    "-temp-dir /output/dir -name final -niter 1000000 -scale 1asec "
+    "-temp-dir /output/dir -name final -niter 100000 -scale 1asec "
     "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
     "-parallel-deconvolution 2048 /input/data.ms",
 ]
@@ -195,7 +195,7 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     "gaincal.applysolution=true",
     # final image
     "wsclean -size 8192 4096 -temp-dir /output/dir "
-    "-name final -niter 1000000 -scale 1asec -gridder wgridder "
+    "-name final -niter 100000 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",
 ]

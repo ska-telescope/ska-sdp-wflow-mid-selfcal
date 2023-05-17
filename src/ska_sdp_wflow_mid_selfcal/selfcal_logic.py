@@ -201,7 +201,7 @@ def command_line_generator(
     LOGGER.info("Making final image")
     yield wsclean_command(
         input_ms,
-        niter=1_000_000,
+        niter=100_000,
         temp_dir=outdir,
         size=size,
         scale=scale,

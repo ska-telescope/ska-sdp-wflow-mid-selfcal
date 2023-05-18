@@ -8,7 +8,7 @@ from typing import Optional, Sequence
 
 from ._version import __version__
 from .change_dir import change_dir
-from .cleanup import cleanup, remove_non_mfs_fits_if_multi_node_run
+from .cleanup import cleanup, remove_unnecessary_fits_files
 from .logging_setup import LOGGER, LOGGER_NAME
 from .multi_node_support import make_multi_node
 from .selfcal_logic import (
@@ -95,7 +95,7 @@ def selfcal_pipeline(
             cmd = singularify(base_cmd, singularity_image)
             cmd = make_multi_node(cmd)
             run_command_line_in_workdir(cmd, outdir)
-            remove_non_mfs_fits_if_multi_node_run(outdir)
+            remove_unnecessary_fits_files(outdir)
 
         LOGGER.info("Pipeline run: SUCCESS")
 

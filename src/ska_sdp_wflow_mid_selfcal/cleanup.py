@@ -1,4 +1,5 @@
 import pathlib
+import re
 import shutil
 
 from .logging_setup import LOGGER
@@ -14,29 +15,25 @@ def cleanup(directory: str) -> None:
     dir_path = pathlib.Path(directory).absolute().resolve()
     _remove_files_with_suffix(dir_path, ".tmp")
     _remove_directory(dir_path / TEMPORARY_MS)
+    remove_unnecessary_fits_files(directory)
 
 
-def remove_non_mfs_fits_if_multi_node_run(directory: str) -> None:
+def remove_unnecessary_fits_files(directory: str) -> None:
     """
-    When running wsclean-mp, remove all FITS files whose name do not contain
-    "MFS"; wsclean-mp writes a set of FITS file for every frequency band before
-    doing multi-frequency synthesis (MFS).
+    Remove any temporary or intermediate .fits files that wsclean-mp creates
+    in multi-node runs. In particular, wsclean-mp writes a set of FITS files
+    for every frequency band before doing multi-frequency synthesis (MFS).
     This is to avoid using massive amounts of disk space.
     """
     dir_path = pathlib.Path(directory).absolute().resolve()
-    condition = any(
-        "-MFS-" in path.name and path.is_file() for path in dir_path.iterdir()
-    )
-    if not condition:
-        return
+
+    patterns = [
+        r"(.*?)-(\d{4})-(dirty|image|model|psf|residual).fits",
+        r"(.*?)-(dirty|image|model|psf|residual)-(\d{4})-tmp.fits",
+    ]
 
     for path in dir_path.iterdir():
-        remove = (
-            path.suffix == ".fits"
-            and "-MFS-" not in path.name
-            and path.is_file()
-        )
-        if remove:
+        if any(re.match(pat, path.name) for pat in patterns):
             path.unlink()
             LOGGER.debug(f"Deleted file: {path}")
 

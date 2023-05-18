@@ -32,7 +32,7 @@ def selfcal_pipeline(
     initial_sky_model: Optional[str] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
-    clean_iters: Sequence[int] = (20, 100, 500, 500_000),
+    clean_iters: Sequence[int] = (20, 100, 500),
     phase_only_cycles: Sequence[int] = (0,),
 ) -> None:
     """

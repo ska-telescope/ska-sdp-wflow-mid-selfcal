@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 0.2.5 - 2023-05-18
+
+This version fixes a major issue with DP3 where gaincal would indefinitely freeze on startup on some of the AA2 datasets. The problem would trigger when DP3 was running with 64 or more CPUs available; the fix is to specify 63 threads or less via the `numthreads` DP3 parameter.
+
+### Fixed
+
+- Fixed the DP3 gaincal freeze problem by always setting the number of DP3 gaincal threads to 16.
+- In `selfcal_pipeline()`, changed the default value of `clean_iters` to match that of the pipeline app.
+
+### Added
+
+- FITS to PNG command-line plotting app `mid-selfcal-fits2png`, which is quite useful to check selfcal progress without having to download 2GB+ FITS files.
+- Added `numpy`, `matplotlib` and `astropy` as dependencies as a result of the above.
+- Pipeline now automatically removes intermediate FITS files created by `wsclean-mp` just after it finishes running, and also on pipeline exit (sucessful or not).
+
+### Changed
+
+- Dockerfile: now building casacore v3.5 from source instead of using the casacore Ubuntu packages which are older (v3.2). Explicitly pin casacore and DP3 versions.
+
+
 ## 0.2.4 - 2023-05-11
 
 This version contains minor improvements to make benchmarking easier.

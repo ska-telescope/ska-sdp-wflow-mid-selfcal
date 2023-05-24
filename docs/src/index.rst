@@ -38,9 +38,6 @@ DP3 and WSClean.
 - See the :ref:`pipeline` page for details of the command-line
   arguments used to run it.
 
-- See the :ref:`kubernetes` page for details of how to run the
-  pipeline using the Kubernetes environment on the DP Testing Platform.
-
 - See the :ref:`example` page to show the results of a test-run of the pipeline
   using simulated SKA-Mid data.
 
@@ -50,5 +47,4 @@ DP3 and WSClean.
   installation
   docker_image
   pipeline
-  kubernetes
   example

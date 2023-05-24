@@ -35,8 +35,8 @@ DP3 and WSClean.
 - See the :ref:`docker` page for details of the Dockerfile used to
   build the software.
 
-- See the :ref:`di_script` page for details of the command-line
-  arguments used to run the direction-independent Python pipeline script.
+- See the :ref:`pipeline` page for details of the command-line
+  arguments used to run it.
 
 - See the :ref:`kubernetes` page for details of how to run the
   pipeline using the Kubernetes environment on the DP Testing Platform.
@@ -49,6 +49,6 @@ DP3 and WSClean.
 
   installation
   docker_image
-  di_script
+  pipeline
   kubernetes
   example

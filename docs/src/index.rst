@@ -26,8 +26,11 @@ determined sufficiently accurately at that point.
 In subsequent iterations, the calibration can proceed by solving for both
 amplitude and phase.
 
-This documentation describes how to run a simple Python script which implements
-this self-calibration loop using the LOFAR software components DP3 and WSClean.
+This documentation describes how to run the Mid self-calibration pipeline which
+implements this self-calibration loop using the LOFAR software components
+DP3 and WSClean.
+
+- See the :ref:`installation` page for installation instructions.
 
 - See the :ref:`docker` page for details of the Dockerfile used to
   build the software.
@@ -44,6 +47,7 @@ this self-calibration loop using the LOFAR software components DP3 and WSClean.
 .. toctree::
   :maxdepth: 1
 
+  installation
   docker_image
   di_script
   kubernetes

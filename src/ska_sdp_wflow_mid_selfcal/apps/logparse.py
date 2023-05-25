@@ -7,7 +7,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, Callable
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,15 +29,16 @@ def parse_args() -> argparse.Namespace:
 
 @dataclass
 class Entry:
+    line_index: int
     level: str
     started: datetime
     ended: datetime
-    duration: Optional[float] = field(init=False, default=None)
     program: Optional[str]
     message: str
 
-    def __post_init__(self):
-        self.duration = (self.ended - self.started).total_seconds()
+    @property
+    def duration(self) -> float:
+        return (self.ended - self.started).total_seconds()
 
 
 def _entries_time_span_seconds(entries: list[Entry]) -> float:
@@ -50,10 +51,10 @@ def _entries_time_span_seconds(entries: list[Entry]) -> float:
 class EntryBlock:
     program: str
     entries: list[Entry]
-    duration: float = field(init=False)
 
-    def __post_init__(self):
-        self.duration = _entries_time_span_seconds(self.entries)
+    @property
+    def duration(self) -> float:
+        return _entries_time_span_seconds(self.entries)
 
 
 REGEX = re.compile(r"\[(.*?) - (.*?) - (.*?)\](.*)")
@@ -98,17 +99,17 @@ def parse_lines_into_entries(lines: list[str]) -> list[Entry]:
     level, ended, program, message = parse_line(lines[0])
 
     # Assume first action has no duration
-    first_entry = Entry(level, ended, ended, program, message)
+    first_entry = Entry(0, level, ended, ended, program, message)
 
     entries: list[Entry] = []
     previous = first_entry
 
-    for line in lines:
+    for index, line in enumerate(lines[1:], start=1):
         try:
             level, ended, program, message = parse_line(line)
         except ValueError:
             continue
-        current = Entry(level, previous.ended, ended, program, message)
+        current = Entry(index, level, previous.ended, ended, program, message)
         entries.append(current)
         previous = current
 
@@ -202,6 +203,40 @@ def parse_pipeline_arguments(log_entries: list[Entry]) -> dict[str, Any]:
     return result
 
 
+def match_first_line_occurrence(
+    entries: list[Entry], matcher: Callable[[Entry], bool]
+) -> Optional[Entry]:
+    for entry in entries:
+        if matcher(entry):
+            return entry
+
+
+def match_first_block_occurrence(
+    entries: list[Entry],
+    matcher_start: Callable[[Entry], bool],
+    matcher_end: Callable[[Entry], bool],
+) -> Optional[list[Entry]]:
+    """
+    Return the first contiguous block of entries such that:
+    - Its starts with an entry matching `matcher_start`
+    - Its ends with an entry matching `matcher_end`. This enrty is included in
+      the returned block.
+    """
+    start_index = next(
+        (i for i, e in enumerate(entries) if matcher_start(e)), None
+    )
+    end_index = next(
+        (
+            i
+            for i, e in enumerate(entries[start_index:], start=start_index)
+            if matcher_end(e)
+        ),
+        None,
+    )
+    if start_index is not None and end_index is not None:
+        return entries[start_index : end_index + 1]
+
+
 def wsclean_runtime_breakdown(entries: list[Entry]) -> dict[str, float]:
     """
     Given a list of entries corresponding to a completed run of
@@ -219,29 +254,58 @@ def wsclean_runtime_breakdown(entries: list[Entry]) -> dict[str, float]:
         ]
         return 3600.0 * hours + 60.0 * minutes + seconds + microseconds / 1.0e6
 
+    # Match the lines we are interested in
     for entry in entries:
-        message_match = regex_breakdown_message.match(entry.message)
-        if message_match:
+        breakdown_message_match = regex_breakdown_message.match(entry.message)
+        if breakdown_message_match:
             break
 
     inversion, prediction, deconvolution = [
         _parse_wsclean_duration_string(group)
-        for group in message_match.groups()
+        for group in breakdown_message_match.groups()
     ]
 
+    # Time to reorder the input data
+    reordering_entries = match_first_line_occurrence(
+        entries,
+        lambda e: e.message.startswith("Reordering: 0%...."),
+    )
+    reordering = reordering_entries.duration
+
+    # Time to create MODEL_DATA (NOTE: this stage is optional)
+    model_data_creation_entry = match_first_line_occurrence(
+        entries,
+        lambda e: e.message.startswith("Adding model data column... DONE"),
+    )
     model_data_creation = 0.0
-    for prev, entry in zip(entries[:-1], entries[1:]):
-        if entry.message == MODEL_DATA_ADD_MSG:
-            model_data_creation = _entries_time_span_seconds([prev, entry])
-            break
+    if model_data_creation_entry:
+        model_data_creation = model_data_creation_entry.duration
+
+    # Time to write MODEL_DATA
+    model_data_writing_entries = match_first_block_occurrence(
+        entries,
+        lambda e: e.message.startswith("Writing changed model back to"),
+        lambda e: e.message.startswith("0%...."),
+    )
+    model_data_writing = _entries_time_span_seconds(model_data_writing_entries)
 
     total = _entries_time_span_seconds(entries)
-    unaccounted = total - (inversion + prediction + deconvolution)
+    accounted = (
+        reordering
+        + inversion
+        + prediction
+        + deconvolution
+        + model_data_creation
+        + model_data_writing
+    )
+    unaccounted = total - accounted
     return {
+        "wsclean_reordering": reordering,
         "wsclean_inversion": inversion,
         "wsclean_prediction": prediction,
         "wsclean_deconvolution": deconvolution,
         "wsclean_model_data_creation": model_data_creation,
+        "wsclean_model_data_writing": model_data_writing,
         "wsclean_unaccounted": unaccounted,
         "wsclean_total": total,
     }

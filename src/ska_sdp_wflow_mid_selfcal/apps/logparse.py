@@ -187,19 +187,20 @@ def wsclean_runtime_breakdown(entries: list[LogEntry]) -> dict[str, float]:
     Given a list of log entries corresponding to a completed run of
     WSClean, return a dictionary containing a run time breakdown in seconds.
     """
-    regex_message = re.compile(
+    MODEL_DATA_ADD_MSG = "Adding model data column... DONE"
+    regex_breakdown_message = re.compile(
         r"Inversion: (.*?), prediction: (.*?), deconvolution: (.*)"
     )
-    regex_duration = re.compile(r"(\d+):(\d{2}):(\d{2})\.(\d{6})")
+    regex_duration_hhmmss = re.compile(r"(\d+):(\d{2}):(\d{2})\.(\d{6})")
 
     def _parse_wsclean_duration_string(s: str) -> float:
         hours, minutes, seconds, microseconds = [
-            int(group) for group in regex_duration.match(s).groups()
+            int(group) for group in regex_duration_hhmmss.match(s).groups()
         ]
         return 3600.0 * hours + 60.0 * minutes + seconds + microseconds / 1.0e6
 
     for entry in entries:
-        message_match = regex_message.match(entry.message)
+        message_match = regex_breakdown_message.match(entry.message)
         if message_match:
             break
 
@@ -208,12 +209,21 @@ def wsclean_runtime_breakdown(entries: list[LogEntry]) -> dict[str, float]:
         for group in message_match.groups()
     ]
 
+    model_data_creation = 0.0
+    for prev, entry in zip(entries[:-1], entries[1:]):
+        if entry.message == MODEL_DATA_ADD_MSG:
+            model_data_creation = _entries_time_span_seconds(
+                [prev, entry]
+            )
+            break
+
     total = _entries_time_span_seconds(entries)
     unaccounted = total - (inversion + prediction + deconvolution)
     return {
         "wsclean_inversion": inversion,
         "wsclean_prediction": prediction,
         "wsclean_deconvolution": deconvolution,
+        "wsclean_model_data_creation": model_data_creation,
         "wsclean_unaccounted": unaccounted,
         "wsclean_total": total,
     }

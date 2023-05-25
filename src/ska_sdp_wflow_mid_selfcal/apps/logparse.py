@@ -79,7 +79,7 @@ def parse_line(line: str) -> tuple[str, datetime, str, str]:
     """
     match = re.match(REGEX, line)
     if not match:
-        raise ValueError()
+        raise ValueError(line)
     level, time_str, logger_name, message = match.groups()
     timestamp = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S,%f")
     program = _get_program(logger_name)
@@ -104,7 +104,10 @@ def parse_lines_into_entries(lines: list[str]) -> list[Entry]:
     previous = first_entry
 
     for line in lines:
-        level, ended, program, message = parse_line(line)
+        try:
+            level, ended, program, message = parse_line(line)
+        except ValueError:
+            continue
         current = Entry(level, previous.ended, ended, program, message)
         entries.append(current)
         previous = current

@@ -266,11 +266,16 @@ def wsclean_runtime_breakdown(entries: list[Entry]) -> dict[str, float]:
     ]
 
     # Time to reorder the input data
-    reordering_entries = match_first_line_occurrence(
+    # NOTE: we have to match more widely here because the logs here tend to get
+    # mangled on wsclean-mp runs.
+    reordering_entries = match_first_block_occurrence(
         entries,
-        lambda e: e.message.startswith("Reordering: 0%...."),
+        lambda e: e.message.startswith("Reordering"),
+        lambda e: e.message.startswith("Initializing model visibilities"),
     )
-    reordering = reordering_entries.duration
+    reordering = (
+        reordering_entries[-1].started - reordering_entries[0].ended
+    ).total_seconds()
 
     # Time to create MODEL_DATA (NOTE: this stage is optional)
     model_data_creation_entry = match_first_line_occurrence(

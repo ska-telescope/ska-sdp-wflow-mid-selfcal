@@ -28,23 +28,24 @@ def parse_args() -> argparse.Namespace:
 
 
 @dataclass
-class LogEntry:
+class Entry:
     level: str
     time: datetime
     program: Optional[str]
     message: str
 
 
-def _entries_time_span_seconds(entries: list[LogEntry]) -> float:
+
+def _entries_time_span_seconds(entries: list[Entry]) -> float:
     if not entries:
         return 0.0
     return (entries[-1].time - entries[0].time).total_seconds()
 
 
 @dataclass
-class LogEntryBlock:
+class EntryBlock:
     program: str
-    entries: list[LogEntry]
+    entries: list[Entry]
     duration: float = field(init=False)
 
     def __post_init__(self):
@@ -68,7 +69,7 @@ def _get_program(logger_name: str) -> Optional[str]:
     return program
 
 
-def parse_line(line: str) -> Optional[LogEntry]:
+def parse_line(line: str) -> Optional[Entry]:
     """Parse a log line into a convenient object. Return `None` if the line
     could not be parsed."""
     match = re.match(REGEX, line)
@@ -78,10 +79,10 @@ def parse_line(line: str) -> Optional[LogEntry]:
     time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S,%f")
     program = _get_program(logger_name)
     message = message.strip()
-    return LogEntry(level, time, program, message)
+    return Entry(level, time, program, message)
 
 
-def parse_lines_into_entries(lines: list[str]) -> list[LogEntry]:
+def parse_lines_into_entries(lines: list[str]) -> list[Entry]:
     """
     Parse log lines into a list of entries. Discard lines that have no logging
     header, or whose message is empty.
@@ -95,7 +96,7 @@ def parse_lines_into_entries(lines: list[str]) -> list[LogEntry]:
     return entries
 
 
-def split_log_entry_blocks(log_entries: list[LogEntry]) -> list[LogEntryBlock]:
+def split_log_entry_blocks(log_entries: list[Entry]) -> list[EntryBlock]:
     """
     Split a list of log entries into sequential blocks where each block has
     been produced by either DP3 or wsclean. Blocks are contiguous sub-lists
@@ -108,14 +109,14 @@ def split_log_entry_blocks(log_entries: list[LogEntry]) -> list[LogEntryBlock]:
     regex_end = re.compile(r"(DP3|wsclean) finished in.*")
 
     current_program = None
-    current_entries: list[LogEntry] = []
-    output_blocks: list[LogEntryBlock] = []
+    current_entries: list[Entry] = []
+    output_blocks: list[EntryBlock] = []
 
-    def _parse_block_start_program(entry: LogEntry) -> Optional[str]:
+    def _parse_block_start_program(entry: Entry) -> Optional[str]:
         match = regex_start.match(entry.message)
         return match[1] if match else None
 
-    def _is_block_end(entry: LogEntry) -> bool:
+    def _is_block_end(entry: Entry) -> bool:
         return regex_end.match(entry.message)
 
     def _should_accumulate() -> bool:
@@ -124,7 +125,7 @@ def split_log_entry_blocks(log_entries: list[LogEntry]) -> list[LogEntryBlock]:
     for entry in log_entries:
         if _is_block_end(entry):
             current_entries.append(entry)
-            block = LogEntryBlock(current_program, current_entries)
+            block = EntryBlock(current_program, current_entries)
             output_blocks.append(block)
             current_entries = []
             current_program = None
@@ -138,7 +139,7 @@ def split_log_entry_blocks(log_entries: list[LogEntry]) -> list[LogEntryBlock]:
     return output_blocks
 
 
-def parse_pipeline_arguments(log_entries: list[LogEntry]) -> dict[str, Any]:
+def parse_pipeline_arguments(log_entries: list[Entry]) -> dict[str, Any]:
     """
     Parse the pipeline arguments that are relevant for benchmarking.
     """
@@ -182,9 +183,9 @@ def parse_pipeline_arguments(log_entries: list[LogEntry]) -> dict[str, Any]:
     return result
 
 
-def wsclean_runtime_breakdown(entries: list[LogEntry]) -> dict[str, float]:
+def wsclean_runtime_breakdown(entries: list[Entry]) -> dict[str, float]:
     """
-    Given a list of log entries corresponding to a completed run of
+    Given a list of entries corresponding to a completed run of
     WSClean, return a dictionary containing a run time breakdown in seconds.
     """
     MODEL_DATA_ADD_MSG = "Adding model data column... DONE"
@@ -229,9 +230,9 @@ def wsclean_runtime_breakdown(entries: list[LogEntry]) -> dict[str, float]:
     }
 
 
-def dp3_gaincal_runtime_breakdown(entries: list[LogEntry]) -> dict[str, float]:
+def dp3_gaincal_runtime_breakdown(entries: list[Entry]) -> dict[str, float]:
     """
-    Given a list of log entries corresponding to a completed run of DP3
+    Given a list of entries corresponding to a completed run of DP3
     gaincal, return a dictionary containing a run time breakdown inseconds.
     """
 
@@ -269,7 +270,7 @@ def _dictionary_sum(dicts: list[dict[str, float]]) -> dict[str, float]:
     return {key: sum(d[key] for d in dicts) for key in keys}
 
 
-def _pipeline_outcome(entries: list[LogEntry]) -> str:
+def _pipeline_outcome(entries: list[Entry]) -> str:
     if any(entry.message == "Pipeline run: SUCCESS" for entry in entries):
         return "success"
     if any(entry.message == "Pipeline run: FAIL" for entry in entries):

@@ -30,16 +30,20 @@ def parse_args() -> argparse.Namespace:
 @dataclass
 class Entry:
     level: str
-    time: datetime
+    started: datetime
+    ended: datetime
+    duration: Optional[float] = field(init=False, default=None)
     program: Optional[str]
     message: str
 
+    def __post_init__(self):
+        self.duration = (self.ended - self.started).total_seconds()
 
 
 def _entries_time_span_seconds(entries: list[Entry]) -> float:
     if not entries:
         return 0.0
-    return (entries[-1].time - entries[0].time).total_seconds()
+    return (entries[-1].ended - entries[0].started).total_seconds()
 
 
 @dataclass
@@ -69,30 +73,42 @@ def _get_program(logger_name: str) -> Optional[str]:
     return program
 
 
-def parse_line(line: str) -> Optional[Entry]:
-    """Parse a log line into a convenient object. Return `None` if the line
-    could not be parsed."""
+def parse_line(line: str) -> tuple[str, datetime, str, str]:
+    """
+    Parse a log line. Raises ValueError if the line could not be parsed.
+    """
     match = re.match(REGEX, line)
     if not match:
-        return None
+        raise ValueError()
     level, time_str, logger_name, message = match.groups()
-    time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S,%f")
+    timestamp = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S,%f")
     program = _get_program(logger_name)
     message = message.strip()
-    return Entry(level, time, program, message)
+    return level, timestamp, program, message
 
 
 def parse_lines_into_entries(lines: list[str]) -> list[Entry]:
     """
-    Parse log lines into a list of entries. Discard lines that have no logging
-    header, or whose message is empty.
+    Parse log lines into a list of entries.
     """
-    entries = [parse_line(line) for line in lines]
-    entries = [
-        entry
-        for entry in entries
-        if entry and entry.message and not entry.message.isspace()
-    ]
+    if not lines:
+        return []
+
+    # Deal with first line separately
+    level, ended, program, message = parse_line(lines[0])
+
+    # Assume first action has no duration
+    first_entry = Entry(level, ended, ended, program, message)
+
+    entries: list[Entry] = []
+    previous = first_entry
+
+    for line in lines:
+        level, ended, program, message = parse_line(line)
+        current = Entry(level, previous.ended, ended, program, message)
+        entries.append(current)
+        previous = current
+
     return entries
 
 
@@ -213,9 +229,7 @@ def wsclean_runtime_breakdown(entries: list[Entry]) -> dict[str, float]:
     model_data_creation = 0.0
     for prev, entry in zip(entries[:-1], entries[1:]):
         if entry.message == MODEL_DATA_ADD_MSG:
-            model_data_creation = _entries_time_span_seconds(
-                [prev, entry]
-            )
+            model_data_creation = _entries_time_span_seconds([prev, entry])
             break
 
     total = _entries_time_span_seconds(entries)

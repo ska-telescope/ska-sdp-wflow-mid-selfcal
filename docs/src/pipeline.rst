@@ -34,7 +34,7 @@ The help text for the pipeline app can be obtained by running
 
 .. code-block:: none
 
-  usage: mid-selfcal-pipeline [-h] [--version] --singularity-image SINGULARITY_IMAGE [--base-outdir BASE_OUTDIR] --size SIZE SIZE --scale SCALE [--initial-sky-model INITIAL_SKY_MODEL]
+  usage: mid-selfcal-pipeline [-h] [--version] [--singularity-image SINGULARITY_IMAGE] [--base-outdir BASE_OUTDIR] --size SIZE SIZE --scale SCALE [--initial-sky-model INITIAL_SKY_MODEL]
                               [--gaincal-solint GAINCAL_SOLINT] [--gaincal-nchan GAINCAL_NCHAN] [--clean-iters [CLEAN_ITERS ...]] [--phase-only-cycles [PHASE_ONLY_CYCLES ...]] --input-ms
                               INPUT_MS [INPUT_MS ...]
 
@@ -44,10 +44,10 @@ The help text for the pipeline app can be obtained by running
     -h, --help            show this help message and exit
     --version             show program's version number and exit
     --singularity-image SINGULARITY_IMAGE
-                          Path to the singularity image file with both wsclean and DP3 installed. (default: None)
+                          Optional path to a singularity image file with both WSClean and DP3 installed. If specified, run WSClean and DP3 inside singularity containers; otherwise, run
+                          them on bare metal. (default: None)
     --base-outdir BASE_OUTDIR
-                          Base output directory; a uniquely named sub-directory will be created, in which all products will be written. (default: /home/vince/repositories/ska-sdp-wflow-
-                          mid-selfcal/docs)
+                          Base output directory; a uniquely named sub-directory will be created, in which all products will be written. (default: <current working directory>)
     --size SIZE SIZE      Output image size as two integers <width> <height> (default: None)
     --scale SCALE         Scale of a pixel, as a string such as "20asec" or "0.01deg". (default: None)
     --initial-sky-model INITIAL_SKY_MODEL
@@ -75,6 +75,15 @@ The input data can be given as multiple measurement sets, which contain visibili
 On startup, the pipeline creates a uniquely-named directory where it will store its products, as well as any temporary files created by DP3 and WSClean.
 ``--base-outdir`` allows to specify the parent directory inside which this uniquely-named output directory will be created.
 Currently, the naming pattern is ``selfcal_YYYMMDD_HHMMSS_<MICROSECONDS>``, i.e. based on the date and time the pipeline started processing.
+
+
+Optional: running WSClean and DP3 within singularity containers
+---------------------------------------------------------------
+
+By default, the pipeline assumes that WSClean and DP3 are installed on the host and attempts to run them on bare metal.
+Alternatively, it is possible to specify a singularity image file via ``--singularity-image`` inside which both WSClean and DP3 are expected to be installed.
+In that case, the pipeline will run WSClean and DP3 inside singularity containers spun up from that image file,
+i.e. automatically generate and execute the right singularity commands with the appropriate bind mount points.
 
 
 Optional: initial calibration

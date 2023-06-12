@@ -26,7 +26,7 @@ def selfcal_pipeline(
     input_ms_list: list[str],
     *,
     outdir: str,
-    singularity_image: str,
+    singularity_image: Optional[str],
     size: tuple[int, int],
     scale: str,
     initial_sky_model: Optional[str] = None,
@@ -41,8 +41,9 @@ def selfcal_pipeline(
     Args:
         input_ms_list: List of paths (strings) to the input Measurement Sets.
         outdir: path to the directory where all output files will be written
-        singularity_image: path to the singularity image file with both wsclean
-            and DP3 installed.
+        singularity_image: optional path to a singularity image file with both
+            WSClean and DP3 installed. If specified, run WSClean and DP3 inside
+            singularity containers; otherwise, run them on bare metal.
         size: size of the output image in pixels as an int tuple
             (width, height).
         scale: scale of a pixel, as a string such as "20asec" or "0.01deg".
@@ -73,9 +74,9 @@ def selfcal_pipeline(
         LOGGER.info("Merging input measurement sets into one")
         temporary_ms = os.path.join(outdir, TEMPORARY_MS)
         merge_cmd = dp3_merge_command(input_ms_list, temporary_ms)
-        run_command_line_in_workdir(
-            singularify(merge_cmd, singularity_image), outdir
-        )
+        if singularity_image:
+            merge_cmd = singularify(merge_cmd, singularity_image)
+        run_command_line_in_workdir(merge_cmd, outdir)
 
         LOGGER.info(f"Input size in bytes: {get_bytesize(temporary_ms)}")
 
@@ -92,7 +93,9 @@ def selfcal_pipeline(
             phase_only_cycles=phase_only_cycles,
         )
         for base_cmd in generator:
-            cmd = singularify(base_cmd, singularity_image)
+            cmd = base_cmd
+            if singularity_image:
+                cmd = singularify(cmd, singularity_image)
             cmd = make_multi_node(cmd)
             run_command_line_in_workdir(cmd, outdir)
             remove_unnecessary_fits_files(outdir)

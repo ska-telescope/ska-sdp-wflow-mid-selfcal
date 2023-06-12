@@ -18,10 +18,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--singularity-image",
         type=os.path.realpath,
-        required=True,
+        default=None,
         help=(
-            "Path to the singularity image file with both wsclean "
-            "and DP3 installed."
+            "Optional path to a singularity image file with both WSClean "
+            "and DP3 installed. If specified, run WSClean and DP3 inside "
+            "singularity containers; otherwise, run them on bare metal."
         ),
     )
     parser.add_argument(

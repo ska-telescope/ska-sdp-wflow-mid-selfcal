@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.6 - 2023-06-15
+
+This version adds the ability to run DP3 and WSClean on the host directly. Documentation has been updated to reflect all the development done in PI18.
+
+### Added
+
+- Can now run DP3 and WSClean on the host directly rather than inside a singularity container. To do this, simply omit the command-line argument `--singularity-image`.
 
 ## 0.2.5 - 2023-05-18
 

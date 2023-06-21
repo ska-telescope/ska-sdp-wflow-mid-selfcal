@@ -20,16 +20,20 @@ installed with the pipeline Python module:
 
 .. code-block::
 
-    $ mid-selfcal-fits2png --help
-    usage: mid-selfcal-fits2png [-h] files [files ...]
+    usage: mid-selfcal-fits2png [-h] [-r {sum,max}] [--zmin ZMIN] [--zmax ZMAX] files [files ...]
 
     Convert WSClean FITS files to PNG
 
     positional arguments:
-    files       WSClean FITS files.
+    files                 WSClean FITS files.
 
     optional arguments:
-    -h, --help  show this help message and exit
+    -h, --help            show this help message and exit
+    -r {sum,max}, --reduction {sum,max}
+                            Reduction function to apply to shrink the image size on a NxN cell-by-cell basis. (default: sum)
+    --zmin ZMIN           Minimum colormap value in units of the estimated background noise standard deviation. (default: -4.0)
+    --zmax ZMAX           Maximum colormap value in units of the estimated background noise standard deviation. (default: 10.0)
+
 
 It can be called on multiple files at once as follows:
 
@@ -40,7 +44,17 @@ It can be called on multiple files at once as follows:
 
 For each FITS file, it will create in the same directory an identically-named
 image with a ``.png`` extension, with a reduced resolution of
-2000 x 2000 pixels. Original-resolution images are shrunk via a max-pooling
-operation to preserve the faint sources. The colour scale is dynamically
-adjusted based on a robust estimation of the background noise. Typical run
-times are 10 to 60 seconds per FITS file, depending on their pixel size.
+2000 x 2000 pixels. Original-resolution images are shrunk by the appropriate
+integer factor N, by applying a reduction function to NxN cells (i.e. taking
+their sum or their max value).
+
+The colour scale is dynamically adjusted based on a robust estimation of the
+background noise *after* shrinking. Typical run times are 10 to 60 seconds per
+FITS file, depending on their pixel size.
+
+.. note::
+
+    Max-pooling was found to excessively enhance some otherwise invisible
+    artifacts in some images, and can provide an overall distorted result.
+    We have left the option for future reference, but it is highly recommended
+    to use the "sum" reduction function.

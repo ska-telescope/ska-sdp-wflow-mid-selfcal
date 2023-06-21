@@ -29,6 +29,7 @@ def selfcal_pipeline(
     singularity_image: Optional[str],
     size: tuple[int, int],
     scale: str,
+    weight: str = "uniform",
     initial_sky_model: Optional[str] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
@@ -47,6 +48,8 @@ def selfcal_pipeline(
         size: size of the output image in pixels as an int tuple
             (width, height).
         scale: scale of a pixel, as a string such as "20asec" or "0.01deg".
+        weight: weighting mode, either "natural", "uniform" or "briggs <param>"
+            where `param` is the Briggs robustness parameter (real-valued).
         initial_sky_model: Optional path to a DP3 sky model file to use for an
             initial calibration, before the self-cal starts.
         gaincal_solint: number of time slots over which a gain solution is
@@ -86,6 +89,7 @@ def selfcal_pipeline(
             outdir=outdir,
             size=size,
             scale=scale,
+            weight=weight,
             initial_sky_model=initial_sky_model,
             gaincal_solint=gaincal_solint,
             gaincal_nchan=gaincal_nchan,

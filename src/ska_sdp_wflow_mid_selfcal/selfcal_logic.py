@@ -19,6 +19,7 @@ def wsclean_command(
     niter: int,
     size: tuple[int, int],
     scale: str,
+    weight: str = "uniform",
     gridder: str = "wgridder",
     auto_threshold: float = 3.0,
     mgain: float = 0.8,
@@ -36,6 +37,9 @@ def wsclean_command(
     # single string argument to wsclean instead of two.
     width, height = size
     opt_list.extend(["-size", str(width), str(height)])
+
+    # Same thing with "weight", "briggs <value>" must be split into two
+    opt_list.extend(["-weight", *weight.split()])
 
     arg_dict = {
         "-temp-dir": temp_dir,
@@ -137,6 +141,7 @@ def command_line_generator(
     outdir: str,
     size: tuple[int, int],
     scale: str,
+    weight: str = "uniform",
     initial_sky_model: Optional[str] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
@@ -184,6 +189,7 @@ def command_line_generator(
             temp_dir=outdir,
             size=size,
             scale=scale,
+            weight=weight,
             name=f"temp{icycle+1:02d}",
         )
 
@@ -205,5 +211,6 @@ def command_line_generator(
         temp_dir=outdir,
         size=size,
         scale=scale,
+        weight=weight,
         name="final",
     )

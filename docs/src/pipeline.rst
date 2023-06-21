@@ -34,9 +34,9 @@ The help text for the pipeline app can be obtained by running
 
 .. code-block:: none
 
-  usage: mid-selfcal-pipeline [-h] [--version] [--singularity-image SINGULARITY_IMAGE] [--base-outdir BASE_OUTDIR] --size SIZE SIZE --scale SCALE [--initial-sky-model INITIAL_SKY_MODEL]
-                              [--gaincal-solint GAINCAL_SOLINT] [--gaincal-nchan GAINCAL_NCHAN] [--clean-iters [CLEAN_ITERS ...]] [--phase-only-cycles [PHASE_ONLY_CYCLES ...]] --input-ms
-                              INPUT_MS [INPUT_MS ...]
+  usage: mid-selfcal-pipeline [-h] [--version] [--singularity-image SINGULARITY_IMAGE] [--base-outdir BASE_OUTDIR] --size SIZE SIZE --scale SCALE [--weight WEIGHT [WEIGHT ...]]
+                              [--initial-sky-model INITIAL_SKY_MODEL] [--gaincal-solint GAINCAL_SOLINT] [--gaincal-nchan GAINCAL_NCHAN] [--clean-iters [CLEAN_ITERS ...]]
+                              [--phase-only-cycles [PHASE_ONLY_CYCLES ...]] --input-ms INPUT_MS [INPUT_MS ...]
 
   Launch the SKA Mid self-calibration pipeline
 
@@ -47,9 +47,12 @@ The help text for the pipeline app can be obtained by running
                           Optional path to a singularity image file with both WSClean and DP3 installed. If specified, run WSClean and DP3 inside singularity containers; otherwise, run
                           them on bare metal. (default: None)
     --base-outdir BASE_OUTDIR
-                          Base output directory; a uniquely named sub-directory will be created, in which all products will be written. (default: <current working directory>)
+                          Base output directory; a uniquely named sub-directory will be created, in which all products will be written. (default: /home/vince)
     --size SIZE SIZE      Output image size as two integers <width> <height> (default: None)
     --scale SCALE         Scale of a pixel, as a string such as "20asec" or "0.01deg". (default: None)
+    --weight WEIGHT [WEIGHT ...]
+                          Weighting mode, either 'natural', 'uniform' or briggs <R>', where `R` is the Briggs robustness parameter, a real-valued number between -2.0 and 2.0. (default:
+                          uniform)
     --initial-sky-model INITIAL_SKY_MODEL
                           Optional path to a DP3 sky model file to use for an initial calibration, before the self-cal starts. (default: None)
     --gaincal-solint GAINCAL_SOLINT
@@ -135,6 +138,16 @@ The parameters of the output image must be specified via ``--size`` and ``--scal
 ``--size`` is the width and height of the image in pixels
 ``-scale`` is the angular scale of a pixel as a string parseable by WSClean.
 Example: ``--size 10000 10000 --scale 0.5asec``.
+
+
+Weighting mode
+--------------
+
+The weighting mode used by WSClean can be tweaked via ``--weight``, options are:
+
+- ``uniform``
+- ``natural``
+- ``briggs <R>``, where the robustness parameter R should be between -2.0 (close to uniform weighting) to 2.0 (close to natural).
 
 
 Calibration solution intervals

@@ -48,6 +48,17 @@ def parse_args() -> argparse.Namespace:
         help=('Scale of a pixel, as a string such as "20asec" or "0.01deg".'),
     )
     parser.add_argument(
+        "--weight",
+        nargs="+",
+        type=str,
+        default="uniform",
+        help=(
+            "Weighting mode, either 'natural', 'uniform' or briggs <R>', "
+            "where `R` is the Briggs robustness parameter, a real-valued "
+            "number between -2.0 and 2.0. "
+        ),
+    )
+    parser.add_argument(
         "--initial-sky-model",
         type=str,
         help=(
@@ -128,6 +139,7 @@ def main():
         singularity_image=args.singularity_image,
         size=args.size,
         scale=args.scale,
+        weight=" ".join(args.weight),
         initial_sky_model=args.initial_sky_model,
         gaincal_solint=args.gaincal_solint,
         gaincal_nchan=args.gaincal_nchan,

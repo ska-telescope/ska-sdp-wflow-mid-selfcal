@@ -53,7 +53,7 @@ IMAGE_ONLY_INPUT_ARGS = {
 
 IMAGE_ONLY_EXPECTED_COMMAND_LINES = [
     # Just one imaging step
-    "wsclean -size 8192 4096 -temp-dir /output/dir "
+    "wsclean -size 8192 4096 -weight uniform -temp-dir /output/dir "
     "-name final -niter 100000 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",
@@ -72,6 +72,7 @@ ONE_CYCLE_INPUT_ARGS = {
     "outdir": "/output/dir",
     "size": (8192, 4096),
     "scale": "1asec",
+    "weight": "briggs -0.5",
     "gaincal_solint": 3,
     "gaincal_nchan": 5,
     "clean_iters": (100,),
@@ -80,7 +81,7 @@ ONE_CYCLE_INPUT_ARGS = {
 
 ONE_CYCLE_EXPECTED_COMMAND_LINES = [
     # cycle 1 imaging
-    "wsclean -size 8192 4096 -temp-dir /output/dir "
+    "wsclean -size 8192 4096 -weight briggs -0.5 -temp-dir /output/dir "
     "-name temp01 -niter 100 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",
@@ -92,7 +93,7 @@ ONE_CYCLE_EXPECTED_COMMAND_LINES = [
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
     "gaincal.applysolution=true",
     # final image
-    "wsclean -size 8192 4096 "
+    "wsclean -size 8192 4096 -weight briggs -0.5 "
     "-temp-dir /output/dir -name final -niter 100000 -scale 1asec "
     "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
     "-parallel-deconvolution 2048 /input/data.ms",
@@ -130,10 +131,10 @@ ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
     "gaincal.usechannelfreq=true gaincal.applysolution=true "
     "gaincal.sourcedb=/input/skymodel.db ",
     # cycle 1 imaging
-    "wsclean -size 8192 4096 -temp-dir /output/dir "
-    "-name temp01 -niter 100 -scale 1asec -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    "/input/data.ms",
+    "wsclean -size 8192 4096 -weight uniform -temp-dir /output/dir "
+    "-name temp01 -niter 100 -scale 1asec "
+    "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
+    "-parallel-deconvolution 2048 /input/data.ms",
     # phase-only gaincal
     "DP3 numthreads=16 msin=/input/data.ms "
     "msout=/input/data.ms msout.overwrite=true "
@@ -142,7 +143,7 @@ ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
     "gaincal.applysolution=true",
     # final image
-    "wsclean -size 8192 4096 "
+    "wsclean -size 8192 4096 -weight uniform "
     "-temp-dir /output/dir -name final -niter 100000 -scale 1asec "
     "-gridder wgridder -auto-threshold 3.0 -mgain 0.8 "
     "-parallel-deconvolution 2048 /input/data.ms",
@@ -170,7 +171,7 @@ TWO_CYCLES_INPUT_ARGS = {
 
 TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     # cycle 1 imaging
-    "wsclean -size 8192 4096 -temp-dir /output/dir "
+    "wsclean -size 8192 4096 -weight uniform -temp-dir /output/dir "
     "-name temp01 -niter 100 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",
@@ -182,7 +183,7 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
     "gaincal.applysolution=true",
     # cycle 2 imaging
-    "wsclean -size 8192 4096 -temp-dir /output/dir "
+    "wsclean -size 8192 4096 -weight uniform -temp-dir /output/dir "
     "-name temp02 -niter 200 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",
@@ -194,7 +195,7 @@ TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
     "gaincal.applysolution=true",
     # final image
-    "wsclean -size 8192 4096 -temp-dir /output/dir "
+    "wsclean -size 8192 4096 -weight uniform -temp-dir /output/dir "
     "-name final -niter 100000 -scale 1asec -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",

@@ -29,32 +29,30 @@ def wsclean_command(
     Generate a WSCLEAN command-line. The name of the keyword arguments of this
     function correspond *exactly* to the command-line arguments of WSCLEAN.
     """
-    opt_list = []
-
-    # We must deal with "size" separately, because the 2-tuple needs to be
-    # unpacked into two separate arguments. We can't pass -size as
-    # f"{size[0]} {size[1]}", because the shell will pass e.g. "4096 4096" as a
-    # single string argument to wsclean instead of two.
-    width, height = size
-    opt_list.extend(["-size", str(width), str(height)])
-
-    # Same thing with "weight", "briggs <value>" must be split into two
-    opt_list.extend(["-weight", *weight.split()])
-
+    # NOTE: the "size" argument must be unpacked into two separate strings,
+    # otherwise it gets passed as a single string e.g.
+    # "4096 4096" which WSClean fails to parse. Same thing for "weight" which
+    # could be something like "briggs -1.0" and also needs to be split.
     arg_dict = {
         "-temp-dir": temp_dir,
         "-name": name,
         "-niter": niter,
+        "-size": [str(dim) for dim in size],
         "-scale": scale,
+        "-weight": weight.split(),
         "-gridder": gridder,
         "-auto-threshold": auto_threshold,
         "-mgain": mgain,
         "-parallel-deconvolution": parallel_deconvolution,
     }
 
+    opt_list = []
     for key, value in arg_dict.items():
         opt_list.append(key)
-        opt_list.append(str(value))
+        if isinstance(value, list):
+            opt_list.extend(value)
+        else:
+            opt_list.append(str(value))
 
     return ["wsclean", *opt_list, input_ms]
 

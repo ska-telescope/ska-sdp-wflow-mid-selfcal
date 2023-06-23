@@ -51,7 +51,8 @@ def parse_args() -> argparse.Namespace:
         "--weight",
         nargs="+",
         type=str,
-        default="uniform",
+        # NOTE: the code expects this argument to be a list of strings
+        default=["uniform"],
         help=(
             "Weighting mode, either 'natural', 'uniform' or briggs <R>', "
             "where `R` is the Briggs robustness parameter, a real-valued "

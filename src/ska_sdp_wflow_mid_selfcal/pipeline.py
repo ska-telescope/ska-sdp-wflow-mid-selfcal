@@ -34,6 +34,7 @@ def selfcal_pipeline(
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
     clean_iters: Sequence[int] = (20, 100, 500),
+    final_clean_iters: int = 100_000,
     phase_only_cycles: Sequence[int] = (0,),
 ) -> None:
     """
@@ -61,6 +62,8 @@ def selfcal_pipeline(
             image is deconvolved down to the noise floor. To run only the final
             imaging stage without selfcal, specify this argument without a
             value.
+        final_clean_iters: Maximum Clean iterations for the final imaging
+            stage.
         phase_only_cycles: sequence of self-cal cycle indices (zero-based) in
             which to perform phase-only calibration. To avoid doing any
             phase-only cal cycles, specify this argument without a value.
@@ -95,6 +98,7 @@ def selfcal_pipeline(
             gaincal_nchan=gaincal_nchan,
             clean_iters=clean_iters,
             phase_only_cycles=phase_only_cycles,
+            final_clean_iters=final_clean_iters,
         )
         for base_cmd in generator:
             cmd = base_cmd

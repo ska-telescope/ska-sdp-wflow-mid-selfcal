@@ -48,12 +48,13 @@ IMAGE_ONLY_INPUT_ARGS = {
     "gaincal_solint": 3,
     "gaincal_nchan": 5,
     "clean_iters": (),
+    "final_clean_iters": 666_666,
     "phase_only_cycles": (0,),
 }
 
 IMAGE_ONLY_EXPECTED_COMMAND_LINES = [
     # Just one imaging step
-    "wsclean -temp-dir /output/dir -name final -niter 100000 "
+    "wsclean -temp-dir /output/dir -name final -niter 666666 "
     "-size 8192 4096 -scale 1asec -weight uniform -gridder wgridder "
     "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
     "/input/data.ms",

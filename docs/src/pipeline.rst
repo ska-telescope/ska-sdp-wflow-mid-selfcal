@@ -36,7 +36,7 @@ The help text for the pipeline app can be obtained by running
 
   usage: mid-selfcal-pipeline [-h] [--version] [--singularity-image SINGULARITY_IMAGE] [--base-outdir BASE_OUTDIR] --size SIZE SIZE --scale SCALE [--weight WEIGHT [WEIGHT ...]]
                               [--initial-sky-model INITIAL_SKY_MODEL] [--gaincal-solint GAINCAL_SOLINT] [--gaincal-nchan GAINCAL_NCHAN] [--clean-iters [CLEAN_ITERS ...]]
-                              [--phase-only-cycles [PHASE_ONLY_CYCLES ...]] --input-ms INPUT_MS [INPUT_MS ...]
+                              [--final-clean-iters FINAL_CLEAN_ITERS] [--phase-only-cycles [PHASE_ONLY_CYCLES ...]] --input-ms INPUT_MS [INPUT_MS ...]
 
   Launch the SKA Mid self-calibration pipeline
 
@@ -47,7 +47,8 @@ The help text for the pipeline app can be obtained by running
                           Optional path to a singularity image file with both WSClean and DP3 installed. If specified, run WSClean and DP3 inside singularity containers; otherwise, run
                           them on bare metal. (default: None)
     --base-outdir BASE_OUTDIR
-                          Base output directory; a uniquely named sub-directory will be created, in which all products will be written. (default: /home/vince)
+                          Base output directory; a uniquely named sub-directory will be created, in which all products will be written. (default: /home/vince/repositories/ska-sdp-wflow-
+                          mid-selfcal)
     --size SIZE SIZE      Output image size as two integers <width> <height> (default: None)
     --scale SCALE         Scale of a pixel, as a string such as "20asec" or "0.01deg". (default: None)
     --weight WEIGHT [WEIGHT ...]
@@ -62,6 +63,8 @@ The help text for the pipeline app can be obtained by running
     --clean-iters [CLEAN_ITERS ...]
                           Maximum Clean iterations per self-cal cycle, as a list of integers. This does not include the final imaging stage, where the image is deconvolved down to the
                           noise floor. To run only the final imaging stage without selfcal, specify this argument without a value. (default: [20, 100, 500])
+    --final-clean-iters FINAL_CLEAN_ITERS
+                          Maximum Clean iterations for the final imaging stage. (default: 100000)
     --phase-only-cycles [PHASE_ONLY_CYCLES ...]
                           List of self-cal cycle indices (zero-based) in which to perform phase-only calibration. A reasonable default is to run a phase-only calibration for the first
                           cycle. To avoid doing any phase-only cal cycles, specify this argument without a value. (default: [0])
@@ -109,13 +112,15 @@ It is usual to perform a phase-only calibration for at least the first self-cali
 The cycles in which to run a phase-only calibration can be specified using the ``--phase-only-cycles`` option.
 It should be given as a list of (zero-based) cycle indices, e.g. ``--phase-only-cycles 0 1``.
 
-After the self-calibration cycles are complete, the pipeline performs a final imaging step, using a maximum number of clean iterations forcibly set to 100,000.
+After the self-calibration cycles are complete, the pipeline performs a final imaging step,
+using a maximum number of clean iterations that is 100,000 by default; the number can be tweaked through ``--final-clean-iters``.
 As an example, suppose we specified the following:
 
 .. code-block::
 
   --clean-iters 30 200
   --phase-only-cycles 0
+  --final-clean-iters 942000
 
 Then the following workflow would be executed:  
 
@@ -123,7 +128,7 @@ Then the following workflow would be executed:
 - Do a phase-only calibration of the data against the resulting model
 - Make an image using a maximum of 200 clean iterations
 - Do a phase + amplitude calibration of the data against the resulting model
-- Make the final image using a maximum of 100,000 clean iterations
+- Make the final image using a maximum of 942,000 clean iterations
 
 .. note::
 

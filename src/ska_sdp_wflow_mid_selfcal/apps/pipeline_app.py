@@ -98,6 +98,12 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--final-clean-iters",
+        type=int,
+        default=100_000,
+        help=("Maximum Clean iterations for the final imaging stage."),
+    )
+    parser.add_argument(
         "--phase-only-cycles",
         nargs="*",
         type=int,
@@ -144,6 +150,7 @@ def main():
         gaincal_solint=args.gaincal_solint,
         gaincal_nchan=args.gaincal_nchan,
         clean_iters=args.clean_iters,
+        final_clean_iters=args.final_clean_iters,
         phase_only_cycles=args.phase_only_cycles,
     )
 

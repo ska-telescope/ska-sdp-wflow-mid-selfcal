@@ -144,6 +144,7 @@ def command_line_generator(
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
     clean_iters: Sequence[int],
+    final_clean_iters: int = 100_000,
     phase_only_cycles: Sequence[int],
 ) -> Iterator[CommandLine]:
     """
@@ -205,7 +206,7 @@ def command_line_generator(
     LOGGER.info("Making final image")
     yield wsclean_command(
         input_ms,
-        niter=100_000,
+        niter=final_clean_iters,
         temp_dir=outdir,
         size=size,
         scale=scale,

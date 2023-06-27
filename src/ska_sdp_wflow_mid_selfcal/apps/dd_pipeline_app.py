@@ -163,9 +163,9 @@ def dd_selfcal_pipeline(
     calibration = Calibration(obs_in, calibration_sky_model, tesselation)
     calibrated_obs, solution_table = calibration.execute()
 
-    # Predict
+    # Predict bright sources and apply latest calibration solutions
     prediction = Prediction(
-        obs_in, calibration_sky_model, tesselation, solution_table
+        obs_in, bright_sources_sky_model, tesselation, solution_table
     )
     calibrated_model_obs = prediction.execute()
 

@@ -1,0 +1,9 @@
+FORMAT = Name, Type, Patch, Ra, Dec, I, SpectralIndex='[1.0, 0.0]', LogarithmicSI, ReferenceFrequency='1420000000.0', MajorAxis, MinorAxis, Orientation
+
+ , , Patch_1, 00:00:00, 00.00.00
+ , , Patch_2, 10:00:00, 45.00.00
+ , , Patch_3, 20:00:00, -45.00.00 
+
+s11, POINT, Patch_1, 00:04:00, 01.00.00, 2.0, [2.0, 0.0], false, , 0.0, 0.0, 0.0
+s21, POINT, Patch_2, 10:04:00, 46.00.00, 2.0, [2.0, 0.0], false, , 0.0, 0.0, 0.0
+s31, GAUSSIAN, Patch_3, 20:04:00, -44.00.00, 1.0, , false, 666666666.0, 0.0, 0.0, 0.0

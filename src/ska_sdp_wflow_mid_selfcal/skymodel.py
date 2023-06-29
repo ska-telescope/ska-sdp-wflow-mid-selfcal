@@ -29,10 +29,19 @@ def _parse_spectral_index(text: str) -> list[float]:
     return list(map(float, stripped.split(SI_DELIMITER)))
 
 
+def _format_spectral_index(spectral_index: list[float]) -> str:
+    csv = ", ".join(str(x) for x in spectral_index)
+    return f"[{csv}]"
+
+
 def _parse_bool(text: str) -> bool:
     if text not in ("true", "false"):
         raise ValueError("Not a valid boolean string representation")
     return text == "true"
+
+
+def _format_bool(bval: bool) -> str:
+    return "true" if bval else "false"
 
 
 def _parse_mvangle(text: str) -> float:
@@ -226,6 +235,31 @@ class Source:
         )
 
 
+def _make_sourcedb_format_line() -> str:
+    return (
+        "FORMAT = Name, Type, Patch, Ra, Dec, I, SpectralIndex, "
+        "LogarithmicSI, ReferenceFrequency, MajorAxis, MinorAxis, Orientation"
+    )
+
+
+def _source_to_sourcedb_entry(source: Source) -> str:
+    field_values = [
+        source.name,
+        source.shape,
+        source.patch,
+        str(source.ra_deg) + "deg",
+        str(source.dec_deg) + "deg",
+        source.stokes_i,
+        _format_spectral_index(source.spectral_index),
+        _format_bool(source.logarithmic_si),
+        source.reference_frequency,
+        source.major_axis_asec,
+        source.minor_axis_asec,
+        source.position_angle_deg,
+    ]
+    return ", ".join(map(str, field_values))
+
+
 def _source_from_attributes_dict(
     attrs: dict[str, Optional[FieldValue]]
 ) -> Source:
@@ -264,10 +298,10 @@ class SkyModel:
         return self._sources
 
     def _to_sourcedb(self) -> str:
-        # FORMAT Line
-        # Ignore patches for now
-        # Actual lines
-        return ""  # TODO
+        lines = [_make_sourcedb_format_line()]
+        for source in self.sources:
+            lines.append(_source_to_sourcedb_entry(source))
+        return "\n".join(lines) + "\n"
 
     def save_sourcedb(self, fname: str) -> None:
         """
@@ -312,36 +346,3 @@ class SkyModel:
         """
         with open(fname, "r") as fobj:
             return cls._parse_sourcedb(fobj.read())
-
-
-if __name__ == "__main__":
-    # NOTE: 95%+ of the run time is consumed by:
-    # parse_mvangle
-    # initializing SkyCoord
-
-    fname = (
-        "/home/vince/repositories/ska-sdp-wflow-mid-selfcal/"
-        "tests/data/example_long.skymodel"
-    )
-    sm = SkyModel.load_sourcedb(fname)
-    for source in sm.sources:
-        print(source)
-
-    print(len(sm.sources))
-
-    import matplotlib.pyplot as plt
-
-    ra = [s.ra_deg for s in sm.sources]
-    dec = [s.dec_deg for s in sm.sources]
-    size = [1000 * abs(s.stokes_i) for s in sm.sources]
-
-    def get_color(s: Source) -> str:
-        return "orangered" if s.stokes_i < 0 else "cornflowerblue"
-
-    color = [get_color(s) for s in sm.sources]
-
-    plt.figure()
-    plt.scatter(ra, dec, marker="o", s=size, c=color, alpha=0.25)
-    plt.grid()
-    plt.tight_layout()
-    plt.show()

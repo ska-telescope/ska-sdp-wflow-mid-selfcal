@@ -1,5 +1,6 @@
 # pylint: disable=redefined-outer-name
 import os
+import tempfile
 
 import pytest
 
@@ -76,3 +77,20 @@ def test_parsing_sourcedb_skymodel_file(
     """
     sources = SkyModel.load_sourcedb(example_skymodel_file_path).sources
     assert sources == expected_example_sources
+
+
+def test_skymodel_identical_after_saving_to_sourcedb_then_loading(
+    expected_example_sources: list[Source],
+):
+    """
+    Save list of sources to sourcedb file, then load it again and check that
+    loaded source list is the same as the original.
+    """
+    original = SkyModel(expected_example_sources)
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        fname = os.path.join(tempdir, "test.skymodel")
+        original.save_sourcedb(fname)
+
+        loaded = SkyModel.load_sourcedb(fname)
+        assert loaded.sources == original.sources

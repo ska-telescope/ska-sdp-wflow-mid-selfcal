@@ -10,7 +10,7 @@ import math
 import re
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Callable, Literal, Match, Optional, Pattern, Sequence, Union
+from typing import Callable, Match, Optional, Pattern, Sequence, Union
 
 import astropy.units as u
 from astropy.coordinates import Angle
@@ -200,21 +200,21 @@ def _float_sequence_isclose(
 @dataclass
 class Source:
     """
-    Data class for source parameters.
+    Data class for source parameters. Points and Gaussians are supported, where
+    any source with a major FWHM of zero is considered to be a point.
     """
 
     name: str
-    shape: Literal["POINT", "GAUSSIAN"]
     ra_deg: float
     dec_deg: float
     patch: Optional[str]
     stokes_i: float
-    major_axis_asec: float
-    minor_axis_asec: float
+    major_fwhm_asec: float
+    minor_fwhm_asec: float
     position_angle_deg: float
     spectral_index: list[float]
     logarithmic_si: bool
-    reference_frequency: float
+    reference_frequency_hz: float
 
     # NOTE: We have to customise the equality operator, because when parsing
     # floating point values from text (especially RA/Dec) we may end up with
@@ -243,18 +243,19 @@ def _make_sourcedb_format_line() -> str:
 
 
 def _source_to_sourcedb_entry(source: Source) -> str:
+    type_str = "POINT" if source.major_fwhm_asec == 0 else "GAUSSIAN"
     field_values = [
         source.name,
-        source.shape,
+        type_str,
         source.patch,
         str(source.ra_deg) + "deg",
         str(source.dec_deg) + "deg",
         source.stokes_i,
         _format_spectral_index(source.spectral_index),
         _format_bool(source.logarithmic_si),
-        source.reference_frequency,
-        source.major_axis_asec,
-        source.minor_axis_asec,
+        source.reference_frequency_hz,
+        source.major_fwhm_asec,
+        source.minor_fwhm_asec,
         source.position_angle_deg,
     ]
     return ", ".join(map(str, field_values))
@@ -263,19 +264,31 @@ def _source_to_sourcedb_entry(source: Source) -> str:
 def _source_from_attributes_dict(
     attrs: dict[str, Optional[FieldValue]]
 ) -> Source:
+
+    major_fwhm_asec = attrs["MajorAxis"]
+    minor_fwhm_asec = attrs["MinorAxis"]
+    position_angle_deg = attrs["Orientation"]
+
+    # Internally, we consider that any source with a major fwhm of zero is a
+    # point. Here we ensure consistency, by considering that the "Type" field
+    # overrules the others.
+    if attrs["Type"] == "POINT":
+        major_fwhm_asec = 0.0
+        minor_fwhm_asec = 0.0
+        position_angle_deg = 0.0
+
     return Source(
         name=attrs["Name"],
-        shape=attrs["Type"],
         ra_deg=attrs["Ra"],
         dec_deg=attrs["Dec"],
         patch=attrs["Patch"],
         stokes_i=attrs["I"],
-        major_axis_asec=attrs["MajorAxis"],
-        minor_axis_asec=attrs["MinorAxis"],
-        position_angle_deg=attrs["Orientation"],
+        major_fwhm_asec=major_fwhm_asec,
+        minor_fwhm_asec=minor_fwhm_asec,
+        position_angle_deg=position_angle_deg,
         spectral_index=attrs["SpectralIndex"],
         logarithmic_si=attrs["LogarithmicSI"],
-        reference_frequency=attrs["ReferenceFrequency"],
+        reference_frequency_hz=attrs["ReferenceFrequency"],
     )
 
 

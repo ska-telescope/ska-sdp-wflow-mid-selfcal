@@ -98,7 +98,7 @@ class DP3Command(Command):
     Container for all the arguments in a DP3 command.
     """
 
-    def __init__(self, *, options: dict[str, Arg]) -> None:
+    def __init__(self, options: dict[str, Arg]) -> None:
         super().__init__("DP3", positional_args=[], flags=[], options=options)
 
     def render_option(self, key: str, arg: Arg) -> list[str]:

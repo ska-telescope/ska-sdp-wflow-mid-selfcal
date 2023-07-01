@@ -130,3 +130,51 @@ def test_wsclean_command_rendering_with_singularity_exec_and_mpirun(
         render_command_with_modifiers(wsclean_command, [mpirun, sing])
         == expected
     )
+
+
+@pytest.fixture
+def dp3_command() -> DP3Command:
+    options = {
+        "msin": [Path("/path/to/input1.ms"), Path("/path/to/input2.ms")],
+        "msout": Path("/path/to/output.ms"),
+        "steps": ["gaincal"],
+        "gaincal.caltype": "scalarphase",
+        "gaincal.solint": 50,
+        "gaincal.tolerance": 1e-3,
+        "gaincal.applysolution": True,
+    }
+    return DP3Command(options)
+
+
+def test_dp3_command_rendering(dp3_command: DP3Command):
+    expected = [
+        "DP3",
+        "gaincal.applysolution=true",
+        "gaincal.caltype=scalarphase",
+        "gaincal.solint=50",
+        "gaincal.tolerance=0.001",
+        "msin=[/path/to/input1.ms,/path/to/input2.ms]",
+        "msout=/path/to/output.ms",
+        "steps=[gaincal]",
+    ]
+    assert render_command(dp3_command) == expected
+
+
+def test_dp3_command_rendering_with_singularity_exec(dp3_command: DP3Command):
+    mod = SingularityExec(Path("singularity_image.sif"))
+    expected = [
+        "singularity",
+        "exec",
+        "--bind",
+        "/path/to:/mnt/path/to",
+        "singularity_image.sif",
+        "DP3",
+        "gaincal.applysolution=true",
+        "gaincal.caltype=scalarphase",
+        "gaincal.solint=50",
+        "gaincal.tolerance=0.001",
+        "msin=[/mnt/path/to/input1.ms,/mnt/path/to/input2.ms]",
+        "msout=/mnt/path/to/output.ms",
+        "steps=[gaincal]",
+    ]
+    assert render_command_with_modifiers(dp3_command, [mod]) == expected

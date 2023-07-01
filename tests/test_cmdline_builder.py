@@ -1,12 +1,13 @@
-import pytest
-
+# pylint: disable=redefined-outer-name
 from pathlib import Path
+
+import pytest
 
 from ska_sdp_wflow_mid_selfcal.cmdline_builder import (
     DP3Command,
-    WSCleanCommand,
-    SingularityExec,
     Mpirun,
+    SingularityExec,
+    WSCleanCommand,
     render_command,
     render_command_with_modifiers,
 )
@@ -14,6 +15,9 @@ from ska_sdp_wflow_mid_selfcal.cmdline_builder import (
 
 @pytest.fixture
 def wsclean_command() -> WSCleanCommand:
+    """
+    WSCleanCommand used for testing rendering.
+    """
     return WSCleanCommand(
         measurement_sets=[
             Path("/path/to/data1.ms"),
@@ -31,6 +35,9 @@ def wsclean_command() -> WSCleanCommand:
 
 
 def test_wsclean_command_rendering(wsclean_command: WSCleanCommand):
+    """
+    Test that WSCleanCommand renders as expected.
+    """
     expected = [
         "wsclean",
         "-multiscale",
@@ -55,6 +62,9 @@ def test_wsclean_command_rendering(wsclean_command: WSCleanCommand):
 def test_wsclean_command_rendering_with_singularity_exec(
     wsclean_command: WSCleanCommand,
 ):
+    """
+    Test that WSCleanCommand with SingularityExec modifier renders as expected.
+    """
     mod = SingularityExec(Path("singularity_image.sif"))
     expected = [
         "singularity",
@@ -85,6 +95,10 @@ def test_wsclean_command_rendering_with_singularity_exec(
 def test_wsclean_command_rendering_with_singularity_exec_and_mpirun(
     wsclean_command: WSCleanCommand,
 ):
+    """
+    Test that WSCleanCommand with SingularityExec and Mpirun modifiers
+    as expected.
+    """
     sing = SingularityExec(Path("singularity_image.sif"))
     mpirun = Mpirun(8)
     expected = [
@@ -134,6 +148,9 @@ def test_wsclean_command_rendering_with_singularity_exec_and_mpirun(
 
 @pytest.fixture
 def dp3_command() -> DP3Command:
+    """
+    DP3Command used for testing rendering.
+    """
     options = {
         "msin": [Path("/path/to/input1.ms"), Path("/path/to/input2.ms")],
         "msout": Path("/path/to/output.ms"),
@@ -147,6 +164,9 @@ def dp3_command() -> DP3Command:
 
 
 def test_dp3_command_rendering(dp3_command: DP3Command):
+    """
+    Test that DP3Command renders as expected.
+    """
     expected = [
         "DP3",
         "gaincal.applysolution=true",
@@ -161,6 +181,9 @@ def test_dp3_command_rendering(dp3_command: DP3Command):
 
 
 def test_dp3_command_rendering_with_singularity_exec(dp3_command: DP3Command):
+    """
+    Test that DP3Command with SingularityExec modifier renders as expected.
+    """
     mod = SingularityExec(Path("singularity_image.sif"))
     expected = [
         "singularity",

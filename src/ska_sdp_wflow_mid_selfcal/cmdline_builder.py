@@ -1,7 +1,7 @@
 import abc
 import copy
-from typing import Sequence, Union, Optional
 from pathlib import Path
+from typing import Optional, Sequence, Union
 
 ScalarArg = Union[str, bool, int, float, Path]
 
@@ -43,10 +43,10 @@ class Command(abc.ABC):
             options: dictionary of optional arguments, where the keys are the
                 prefix for the option, and the values the associated values.
         """
-        self._executable = executable
-        self._positional_args = positional_args
-        self._flags = flags
-        self._options = options
+        self.executable = executable
+        self.positional_args = positional_args
+        self.flags = flags
+        self.options = options
 
     @abc.abstractmethod
     def render_option(self, key: str, arg: Arg) -> list[str]:
@@ -178,12 +178,11 @@ class SingularityExec(PrefixModifier):
             return [_replace_scalar_arg(item) for item in arg]
 
         # Replace all Path arguments with absolute versions
-        modified_cmd._positional_args = list(
-            map(_replace_arg, modified_cmd._positional_args)
+        modified_cmd.positional_args = list(
+            map(_replace_arg, modified_cmd.positional_args)
         )
-        modified_cmd._options = {
-            key: _replace_arg(arg)
-            for key, arg in modified_cmd._options.items()
+        modified_cmd.options = {
+            key: _replace_arg(arg) for key, arg in modified_cmd.options.items()
         }
 
         # Generate prefixes
@@ -228,16 +227,16 @@ class Mpirun(PrefixModifier):
             return [], cmd
 
         modified_cmd = copy.deepcopy(cmd)
-        modified_cmd._executable = "wsclean-mp"
+        modified_cmd.executable = "wsclean-mp"
         special_options = {
             "-channels-out": self.num_nodes,
             "-fit-spectral-pol": 1,
             "-deconvolution-channels": 1,
         }
-        modified_cmd._options.update(special_options)
+        modified_cmd.options.update(special_options)
 
-        if not "-join-channels" in modified_cmd._flags:
-            modified_cmd._flags.append("-join-channels")
+        if "-join-channels" not in modified_cmd.flags:
+            modified_cmd.flags.append("-join-channels")
 
         prefixes = ["mpirun", "-np", str(self.num_nodes), "-npernode", str(1)]
         return prefixes, modified_cmd
@@ -249,15 +248,15 @@ def render_command(command: Command) -> list[str]:
     `<EXECUTABLE> <FLAGS> <OPTIONS> <POSITIONAL_ARGS>`.
     Flags, options and positional_args are alphabetically sorted.
     """
-    args = [command._executable]
-    args.extend(sorted(command._flags))
+    args = [command.executable]
+    args.extend(sorted(command.flags))
 
-    options = command._options
+    options = command.options
     for key in sorted(options):
         val = options[key]
         args.extend(command.render_option(key, val))
 
-    args.extend(_render_scalar_arg(val) for val in command._positional_args)
+    args.extend(_render_scalar_arg(val) for val in command.positional_args)
     return args
 
 
@@ -280,47 +279,3 @@ def render_command_with_modifiers(
     return prefixes + render_command_with_modifiers(
         modified_command, modifiers[1:]
     )
-
-
-options = {
-    "msin": [
-        Path("relative/path/data1.ms"),
-        Path("other/path/data2.ms"),
-    ],
-    "msout": Path("relative/path/output.ms"),
-    "numthreads": 16,
-    "steps": ["gaincal"],
-    "gaincal.caltype": "scalarphase",
-    "gaincal.tolerance": 1e-3,
-    "gaincal.propagatesolutions": False,
-}
-dp3_cmd = DP3Command(options=options)
-
-
-options = {
-    "-weight": ("briggs", -0.5),
-    "-size": (4096, 4096),
-    "-name": Path("some_dir/basename"),
-}
-flags = ["-multiscale"]
-measurement_sets = [Path("relative_path/to/data.ms")]
-wsclean_cmd = WSCleanCommand(
-    measurement_sets=measurement_sets,
-    flags=flags,
-    options=options,
-)
-
-
-print(
-    render_command_with_modifiers(
-        wsclean_cmd,
-        [SingularityExec(Path("/images/lulz.sif")), Mpirun(160)],
-    )
-)
-
-print(
-    render_command_with_modifiers(
-        dp3_cmd,
-        [Mpirun(16), SingularityExec(Path("/images/lulz.sif"))],
-    )
-)

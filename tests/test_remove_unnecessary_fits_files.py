@@ -39,9 +39,7 @@ def test_remove_unnecessary_fits_files():
         dir_path = Path(tempdir)
         keep = _create_files(dir_path, _generate_file_names_to_keep())
         delete = _create_files(dir_path, _generate_file_names_to_delete())
-        print(keep)
-        print(delete)
-        remove_unnecessary_fits_files(tempdir)
+        remove_unnecessary_fits_files(dir_path)
 
         assert all(path.is_file() for path in keep)
         assert all(not path.exists() for path in delete)

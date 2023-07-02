@@ -1,7 +1,7 @@
-import os
+from pathlib import Path
 from typing import Final, Iterator, Optional, Sequence
 
-from .command_utils import DP3Command
+from .command_utils import DP3Command, Command, WSCleanCommand
 from .logging_setup import LOGGER
 
 CommandLine = list[str]
@@ -13,49 +13,38 @@ performed in-place. """
 
 # pylint: disable=too-many-locals
 def wsclean_command(
-    input_ms: str,
+    input_ms: Path,
     *,
-    temp_dir: str,
-    name: str,
+    temp_dir: Path,
+    name: Path,
     niter: int,
     size: tuple[int, int],
     scale: str,
-    weight: str = "uniform",
+    weight: list[str] = ["uniform"],
     gridder: str = "wgridder",
     auto_threshold: float = 3.0,
     mgain: float = 0.8,
     parallel_deconvolution: int = 2048,
-) -> CommandLine:
+) -> WSCleanCommand:
     """
     Generate a WSCLEAN command-line. The name of the keyword arguments of this
     function correspond *exactly* to the command-line arguments of WSCLEAN.
     """
-    # NOTE: the "size" argument must be unpacked into two separate strings,
-    # otherwise it gets passed as a single string e.g.
-    # "4096 4096" which WSClean fails to parse. Same thing for "weight" which
-    # could be something like "briggs -1.0" and also needs to be split.
-    arg_dict = {
+    options = {
         "-temp-dir": temp_dir,
         "-name": name,
         "-niter": niter,
-        "-size": [str(dim) for dim in size],
+        "-size": size,
         "-scale": scale,
-        "-weight": weight.split(),
+        "-weight": weight,
         "-gridder": gridder,
         "-auto-threshold": auto_threshold,
         "-mgain": mgain,
         "-parallel-deconvolution": parallel_deconvolution,
     }
-
-    opt_list = []
-    for key, value in arg_dict.items():
-        opt_list.append(key)
-        if isinstance(value, list):
-            opt_list.extend(value)
-        else:
-            opt_list.append(str(value))
-
-    return ["wsclean", *opt_list, input_ms]
+    return WSCleanCommand(
+        measurement_sets=[input_ms], flags=[], options=options
+    )
 
 
 def dp3_merge_command(input_ms_list: list[str], msout: str) -> DP3Command:
@@ -69,8 +58,8 @@ def dp3_merge_command(input_ms_list: list[str], msout: str) -> DP3Command:
 
 
 def dp3_gaincal_command(
-    msin: str,
-    msout: str,
+    msin: Path,
+    msout: Path,
     *,
     caltype: str,
     solint: int,
@@ -81,88 +70,78 @@ def dp3_gaincal_command(
     """
     # NOTE: DP3 numthreads MUST be capped to a value <= 63. Otherwise, gaincal
     # may hang indefinitely on a machine with 64 cores or more.
-    return [
-        "DP3",
-        "numthreads=16",
-        f"msin={msin}",
-        f"msout={msout}",
-        "msout.overwrite=true",
-        "steps=[gaincal]",
-        f"gaincal.caltype={caltype}",
-        "gaincal.maxiter=50",
-        f"gaincal.solint={solint}",
-        f"gaincal.nchan={nchan}",
-        "gaincal.tolerance=1e-3",
-        "gaincal.usemodelcolumn=true",
-        "gaincal.applysolution=true",
-    ]
+    return DP3Command(
+        {
+            "numthreads": 16,
+            "msin": msin,
+            "msout": msout,
+            "msout.overwrite": True,
+            "steps": ["gaincal"],
+            "gaincal.caltype": caltype,
+            "gaincal.maxiter": 50,
+            "gaincal.solint": solint,
+            "gaincal.nchan": nchan,
+            "gaincal.tolerance": 1e-3,
+            "gaincal.usemodelcolumn": True,
+            "gaincal.applysolution": True,
+        }
+    )
 
 
 def dp3_initial_gaincal_command(
-    msin: str,
-    msout: str,
+    msin: Path,
+    msout: Path,
     *,
     caltype: str,
-    sourcedb: str,
+    sourcedb: Path,
     solint: int,
     nchan: int,
-) -> CommandLine:
+) -> DP3Command:
     """
     Generate a DP3 initial gain calibration command-line. It requires an
     existing skymodel, and does *not* use the model column.
     """
     # NOTE: DP3 numthreads MUST be capped to a value <= 63. Otherwise, gaincal
     # may hang indefinitely on a machine with 64 cores or more.
-    return [
-        "DP3",
-        "numthreads=16",
-        f"msin={msin}",
-        f"msout={msout}",
-        "msout.overwrite=true",
-        "steps=[gaincal]",
-        f"gaincal.caltype={caltype}",
-        "gaincal.maxiter=50",
-        f"gaincal.solint={solint}",
-        f"gaincal.nchan={nchan}",
-        "gaincal.tolerance=1e-3",
-        "gaincal.propagatesolutions=false",
-        "gaincal.usebeammodel=true",
-        "gaincal.usechannelfreq=true",
-        "gaincal.applysolution=true",
-        f"gaincal.sourcedb={sourcedb}",
-    ]
+    return DP3Command(
+        {
+            "numthreads": 16,
+            "msin": msin,
+            "msout": msout,
+            "msout.overwrite": True,
+            "steps": ["gaincal"],
+            "gaincal.caltype": caltype,
+            "gaincal.maxiter": 50,
+            "gaincal.solint": solint,
+            "gaincal.nchan": nchan,
+            "gaincal.tolerance": 1e-3,
+            "gaincal.propagatesolutions": False,
+            "gaincal.usebeammodel": True,
+            "gaincal.usechannelfreq": True,
+            "gaincal.applysolution": True,
+            "gaincal.sourcedb": sourcedb,
+        }
+    )
 
 
 def command_line_generator(
-    input_ms: str,
+    input_ms: Path,
     *,
-    outdir: str,
+    outdir: Path,
     size: tuple[int, int],
     scale: str,
     weight: str = "uniform",
-    initial_sky_model: Optional[str] = None,
+    initial_sky_model: Optional[Path] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
     clean_iters: Sequence[int],
     final_clean_iters: int = 100_000,
     phase_only_cycles: Sequence[int],
-) -> Iterator[CommandLine]:
+) -> Iterator[Command]:
     """
     Iterator that generates the correct, bare-metal command lines to perform
     the self-calibration loop.
-
-    The generated command lines contain only *absolute* paths when
-    referring to a file or directory. When executed, we want the command
-    lines to behave the same regardless of the working directory from
-    where they are called. Also, the code that transforms bare-metal commands
-    into singularity commands needs all paths to be absolute.
     """
-    input_ms = os.path.abspath(input_ms)
-    outdir = os.path.abspath(outdir)
-
-    if initial_sky_model:
-        initial_sky_model = os.path.abspath(initial_sky_model)
-
     num_cycles = len(clean_iters)
 
     if initial_sky_model:
@@ -189,7 +168,7 @@ def command_line_generator(
             size=size,
             scale=scale,
             weight=weight,
-            name=f"temp{icycle+1:02d}",
+            name=outdir / f"temp{icycle+1:02d}",
         )
 
         caltype = (
@@ -211,5 +190,5 @@ def command_line_generator(
         size=size,
         scale=scale,
         weight=weight,
-        name="final",
+        name=outdir / "final",
     )

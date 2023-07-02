@@ -1,5 +1,4 @@
 import logging
-import os
 import shlex
 import signal
 import subprocess
@@ -8,7 +7,6 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from ._version import __version__
-from .change_dir import change_dir
 from .cleanup import cleanup, remove_unnecessary_fits_files
 from .command_utils import (
     Command,
@@ -18,13 +16,11 @@ from .command_utils import (
     render_command_with_modifiers,
 )
 from .logging_setup import LOGGER, LOGGER_NAME
-from .multi_node_support import make_multi_node
 from .selfcal_logic import (
     TEMPORARY_MS,
     command_line_generator,
     dp3_merge_command,
 )
-from .singularify import CommandLine, singularify
 from .slurm_support import (
     get_slurm_allocated_resources,
     log_slurm_allocated_resources,
@@ -40,7 +36,7 @@ def selfcal_pipeline(
     singularity_image: Optional[Path],
     size: tuple[int, int],
     scale: str,
-    weight: str = "uniform",
+    weight: list[str] = ["uniform"],
     initial_sky_model: Optional[Path] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
@@ -60,7 +56,8 @@ def selfcal_pipeline(
         size: size of the output image in pixels as an int tuple
             (width, height).
         scale: scale of a pixel, as a string such as "20asec" or "0.01deg".
-        weight: weighting mode, either "natural", "uniform" or "briggs <param>"
+        weight: weighting mode as a list of strings, either ["natural"],
+            ["uniform"] or ["briggs", "<param>"]
             where `param` is the Briggs robustness parameter (real-valued).
         initial_sky_model: Optional path to a DP3 sky model file to use for an
             initial calibration, before the self-cal starts.
@@ -85,11 +82,11 @@ def selfcal_pipeline(
         slurm_resources = get_slurm_allocated_resources()
         log_slurm_allocated_resources(slurm_resources)
 
-        command_modifiers = []
+        modifiers = []
         if singularity_image:
-            command_modifiers.append(SingularityExec(singularity_image))
+            modifiers.append(SingularityExec(singularity_image))
         if slurm_resources.nodes is not None and slurm_resources.nodes > 1:
-            command_modifiers.append(Mpirun(slurm_resources.nodes))
+            modifiers.append(Mpirun(slurm_resources.nodes))
 
         # Merge all input MSes into one, because DP3's gaincal can only operate
         # on a single input MS. We do this even if there's only one input MS,
@@ -98,31 +95,27 @@ def selfcal_pipeline(
         LOGGER.info("Merging input measurement sets into one")
         temporary_ms = outdir / TEMPORARY_MS
         merge_cmd = dp3_merge_command(input_ms_list, temporary_ms)
-        run_command(merge_cmd, command_modifiers)
+        run_command(merge_cmd, modifiers)
 
         LOGGER.info(f"Input size in bytes: {get_bytesize(temporary_ms)}")
 
-        # # From there, perform self-cal in place on the merged MS
-        # generator = command_line_generator(
-        #     temporary_ms,
-        #     outdir=outdir,
-        #     size=size,
-        #     scale=scale,
-        #     weight=weight,
-        #     initial_sky_model=initial_sky_model,
-        #     gaincal_solint=gaincal_solint,
-        #     gaincal_nchan=gaincal_nchan,
-        #     clean_iters=clean_iters,
-        #     phase_only_cycles=phase_only_cycles,
-        #     final_clean_iters=final_clean_iters,
-        # )
-        # for base_cmd in generator:
-        #     cmd = base_cmd
-        #     if singularity_image:
-        #         cmd = singularify(cmd, singularity_image)
-        #     cmd = make_multi_node(cmd)
-        #     run_command_line_in_workdir(cmd, outdir)
-        #     remove_unnecessary_fits_files(outdir)
+        # From there, perform self-cal in place on the merged MS
+        generator = command_line_generator(
+            temporary_ms,
+            outdir=outdir,
+            size=size,
+            scale=scale,
+            weight=weight,
+            initial_sky_model=initial_sky_model,
+            gaincal_solint=gaincal_solint,
+            gaincal_nchan=gaincal_nchan,
+            clean_iters=clean_iters,
+            phase_only_cycles=phase_only_cycles,
+            final_clean_iters=final_clean_iters,
+        )
+        for command in generator:
+            run_command(command, modifiers)
+            remove_unnecessary_fits_files(outdir)
 
         LOGGER.info("Pipeline run: SUCCESS")
 
@@ -175,37 +168,6 @@ def run_command(command: Command, modifiers: Sequence[PrefixModifier]):
     LOGGER.info(f"{program_name} finished in {run_time_seconds:.2f} seconds")
 
 
-# def run_command_line(cmd: CommandLine) -> None:
-#     """
-#     Run given command line, and live-capture its standard output and error
-#     streams to Python loggers. Also log the total run time of the command
-#     at the end.
-#     """
-#     program_name = _get_program_name(cmd)
-#     LOGGER.info(f"Running {program_name}")
-#     cmd_str = shlex.join(cmd)
-#     LOGGER.info(cmd_str)
-
-#     subprocess_logger = logging.getLogger(f"{LOGGER_NAME}.{program_name}")
-
-#     start_time = time.perf_counter()
-#     check_call_with_stream_capture(
-#         cmd, subprocess_logger.debug, subprocess_logger.debug
-#     )
-#     end_time = time.perf_counter()
-#     run_time_seconds = end_time - start_time
-#     LOGGER.info(f"{program_name} finished in {run_time_seconds:.2f} seconds")
-
-
-# def run_command_line_in_workdir(cmd: CommandLine, workdir: str) -> None:
-#     """
-#     Same as run_command_line() but do it with the working directory temporarily
-#     changed to `workdir`.
-#     """
-#     with change_dir(workdir):
-#         run_command_line(cmd)
-
-
 def get_bytesize(path: str) -> int:
     """
     Get the total size that a file or directory occupies on disk,
@@ -214,11 +176,3 @@ def get_bytesize(path: str) -> int:
     output = subprocess.check_output(["du", "-bs", path])
     bytesize_str, __ = output.split()
     return int(bytesize_str)
-
-
-# def _get_program_name(cmd: CommandLine) -> str:
-#     if "wsclean" in cmd or "wsclean-mp" in cmd:
-#         return "wsclean"
-#     if "DP3" in cmd:
-#         return "DP3"
-#     return cmd[0]

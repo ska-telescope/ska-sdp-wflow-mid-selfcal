@@ -147,7 +147,7 @@ def main():
         singularity_image=args.singularity_image,
         size=args.size,
         scale=args.scale,
-        weight=" ".join(args.weight),
+        weight=args.weight,
         initial_sky_model=args.initial_sky_model,
         gaincal_solint=args.gaincal_solint,
         gaincal_nchan=args.gaincal_nchan,

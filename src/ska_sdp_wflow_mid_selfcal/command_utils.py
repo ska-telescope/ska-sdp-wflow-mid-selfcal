@@ -27,8 +27,8 @@ class Command(abc.ABC):
     def __init__(
         self,
         executable: str,
-        positional_args: list[ScalarArg],
-        flags: list[str],
+        positional_args: Sequence[ScalarArg],
+        flags: Sequence[str],
         options: dict[str, Arg],
     ) -> None:
         """
@@ -37,15 +37,15 @@ class Command(abc.ABC):
 
         Args:
             executable: name of the binary executable for this command.
-            positional_args: list of positional arguments for the command
-            flags: list of boolean flags to specify with the command, for
+            positional_args: sequence of positional arguments for the command
+            flags: sequence of boolean flags to specify with the command, for
                 examples could be `--quiet` or `--verbose`.
             options: dictionary of optional arguments, where the keys are the
                 prefix for the option, and the values the associated values.
         """
         self.executable = executable
-        self.positional_args = positional_args
-        self.flags = flags
+        self.positional_args = list(positional_args)
+        self.flags = set(flags)
         self.options = options
 
     @abc.abstractmethod
@@ -65,7 +65,7 @@ class WSCleanCommand(Command):
         self,
         measurement_sets: list[Path],
         *,
-        flags: list[str],
+        flags: Sequence[str],
         options: dict[str, Arg],
     ) -> None:
         """
@@ -234,9 +234,7 @@ class Mpirun(PrefixModifier):
             "-deconvolution-channels": 1,
         }
         modified_cmd.options.update(special_options)
-
-        if "-join-channels" not in modified_cmd.flags:
-            modified_cmd.flags.append("-join-channels")
+        modified_cmd.flags.add("-join-channels")
 
         prefixes = ["mpirun", "-np", str(self.num_nodes), "-npernode", str(1)]
         return prefixes, modified_cmd

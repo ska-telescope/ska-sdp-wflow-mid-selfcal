@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from ska_sdp_wflow_mid_selfcal.cmdline_builder import (
+from ska_sdp_wflow_mid_selfcal.command_utils import (
     DP3Command,
     Mpirun,
     SingularityExec,

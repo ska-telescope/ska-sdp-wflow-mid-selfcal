@@ -9,18 +9,20 @@ def create_pipeline_output_subdirectory(base_directory: Path) -> Path:
     time at which this function was called.
 
     Args:
-        base_directory: A string with the path to the base directory where the
-            new subdirectory will be created.
+        base_directory (Path): The base directory where the subdirectory will
+        be created.
 
     Returns:
-        A string with the path to the newly created subdirectory.
+        Path: The path of the created subdirectory.
 
     Raises:
-        FileNotFoundError: If `base_directory` does not exist.
+        FileExistsError: If the subdirectory already exists.
 
     Example:
-        >>> create_pipeline_output_subdirectory("/home/user/results/")
-        '/home/user/results/selfcal_20230405_091202_123456'
+        >>> base_dir = Path('/path/to/base_directory')
+        >>> sub_dir = create_pipeline_output_subdirectory(base_dir)
+        >>> print(sub_dir)
+        /path/to/base_directory/selfcal_20230702_145127_123456
     """
     subdir_name = datetime.datetime.now().strftime("selfcal_%Y%m%d_%H%M%S_%f")
     subdir_path = base_directory.absolute() / subdir_name

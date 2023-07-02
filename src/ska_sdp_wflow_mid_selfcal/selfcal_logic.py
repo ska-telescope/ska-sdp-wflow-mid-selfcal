@@ -4,7 +4,6 @@ from typing import Final, Iterator, Optional, Sequence
 from .command_utils import Command, DP3Command, WSCleanCommand
 from .logging_setup import LOGGER
 
-CommandLine = list[str]
 
 TEMPORARY_MS: Final[str] = "BewareTheBlob.ms"
 """ Name of the temporary measurement set file on which self-calibration is
@@ -64,7 +63,7 @@ def dp3_gaincal_command(
     caltype: str,
     solint: int,
     nchan: int,
-) -> CommandLine:
+) -> DP3Command:
     """
     Generate a DP3 gain calibration command-line.
     """

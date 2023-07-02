@@ -168,7 +168,7 @@ def run_command(command: Command, modifiers: Sequence[PrefixModifier]):
     LOGGER.info(f"{program_name} finished in {run_time_seconds:.2f} seconds")
 
 
-def get_bytesize(path: str) -> int:
+def get_bytesize(path: Path) -> int:
     """
     Get the total size that a file or directory occupies on disk,
     as reported by `du`.

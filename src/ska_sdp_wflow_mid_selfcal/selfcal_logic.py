@@ -1,6 +1,7 @@
 import os
 from typing import Final, Iterator, Optional, Sequence
 
+from .command_utils import DP3Command
 from .logging_setup import LOGGER
 
 CommandLine = list[str]
@@ -57,15 +58,14 @@ def wsclean_command(
     return ["wsclean", *opt_list, input_ms]
 
 
-def dp3_merge_command(input_ms: list[str], msout: str) -> CommandLine:
+def dp3_merge_command(input_ms_list: list[str], msout: str) -> DP3Command:
     """
     Generate a DP3 command to merge multiple measurement sets into one,
     including only the DATA column. We have do this because gaincal cannot
     handle multiple input MSes.
     """
-    csv = ",".join(input_ms)
-    msin = f"[{csv}]"
-    return ["DP3", f"msin={msin}", f"msout={msout}", "steps=[]"]
+    print(input_ms_list, msout)
+    return DP3Command({"msin": input_ms_list, "msout": msout, "steps": []})
 
 
 def dp3_gaincal_command(

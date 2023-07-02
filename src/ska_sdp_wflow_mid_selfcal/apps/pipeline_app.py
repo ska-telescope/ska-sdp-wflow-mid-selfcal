@@ -1,5 +1,6 @@
 import argparse
 import os
+from pathlib import Path
 
 from .. import __version__, selfcal_pipeline
 from ..directory_creation import create_pipeline_output_subdirectory
@@ -17,7 +18,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument(
         "--singularity-image",
-        type=os.path.realpath,
+        type=Path,
         default=None,
         help=(
             "Optional path to a singularity image file with both WSClean "
@@ -27,8 +28,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--base-outdir",
-        type=str,
-        default=os.getcwd(),
+        type=Path,
+        default=Path.cwd(),
         help=(
             "Base output directory; a uniquely named sub-directory will be "
             "created, in which all products will be written."
@@ -61,7 +62,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--initial-sky-model",
-        type=str,
+        type=Path,
         help=(
             "Optional path to a DP3 sky model file to use for an initial "
             "calibration, before the self-cal starts."
@@ -120,7 +121,7 @@ def parse_args() -> argparse.Namespace:
         "--input-ms",
         nargs="+",
         required=True,
-        type=os.path.realpath,
+        type=Path,
         help="Input measurement set(s).",
     )
     return parser.parse_args()
@@ -132,7 +133,7 @@ def main():
     """
     args = parse_args()
     outdir = create_pipeline_output_subdirectory(args.base_outdir)
-    logfile_path = os.path.join(outdir, "logfile.txt")
+    logfile_path = outdir / "logfile.txt"
     setup_logging(logfile_path)
 
     LOGGER.info("Called with arguments:")

@@ -1,5 +1,6 @@
 import logging
 import sys
+from pathlib import Path
 from typing import Final
 
 LOGGER_NAME: Final[str] = "mid-selfcal"
@@ -9,7 +10,7 @@ LOGGER = logging.getLogger(LOGGER_NAME)
 """ Top-level pipeline logger """
 
 
-def setup_logging(logfile_path: str) -> None:
+def setup_logging(logfile_path: Path) -> None:
     """
     Configure the top-level pipeline logger to print to stderr and to save all
     logs to the given file path.

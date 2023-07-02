@@ -1,8 +1,8 @@
 import datetime
-import pathlib
+from pathlib import Path
 
 
-def create_pipeline_output_subdirectory(base_directory: str) -> str:
+def create_pipeline_output_subdirectory(base_directory: Path) -> Path:
     """
     Creates a new subdirectory inside the given base directory for storing the
     output of a pipeline run. The name of the directory is based on the exact
@@ -22,8 +22,7 @@ def create_pipeline_output_subdirectory(base_directory: str) -> str:
         >>> create_pipeline_output_subdirectory("/home/user/results/")
         '/home/user/results/selfcal_20230405_091202_123456'
     """
-    base_path = pathlib.Path(base_directory).absolute()
     subdir_name = datetime.datetime.now().strftime("selfcal_%Y%m%d_%H%M%S_%f")
-    subdir_path = base_path / subdir_name
+    subdir_path = base_directory.absolute() / subdir_name
     subdir_path.mkdir(parents=False, exist_ok=False)
-    return str(subdir_path)
+    return subdir_path

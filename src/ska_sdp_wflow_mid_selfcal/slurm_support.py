@@ -39,13 +39,11 @@ def get_slurm_allocated_resources() -> SlurmResources:
     )
 
 
-def log_slurm_allocated_resources() -> None:
+def log_slurm_allocated_resources(res: SlurmResources) -> None:
     """
     If running in a SLURM environment, log the resources allocated by the
     SLURM scheduler.
     """
-    res = get_slurm_allocated_resources()
-
     if res.nodes:
         LOGGER.info(f"SLURM allocated nodes: {res.nodes}")
 

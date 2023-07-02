@@ -4,11 +4,19 @@ import shlex
 import signal
 import subprocess
 import time
+from pathlib import Path
 from typing import Optional, Sequence
 
 from ._version import __version__
 from .change_dir import change_dir
 from .cleanup import cleanup, remove_unnecessary_fits_files
+from .command_utils import (
+    Command,
+    Mpirun,
+    PrefixModifier,
+    SingularityExec,
+    render_command_with_modifiers,
+)
 from .logging_setup import LOGGER, LOGGER_NAME
 from .multi_node_support import make_multi_node
 from .selfcal_logic import (
@@ -17,20 +25,23 @@ from .selfcal_logic import (
     dp3_merge_command,
 )
 from .singularify import CommandLine, singularify
-from .slurm_support import log_slurm_allocated_resources
+from .slurm_support import (
+    get_slurm_allocated_resources,
+    log_slurm_allocated_resources,
+)
 from .stream_capture import check_call_with_stream_capture
 
 
 # pylint: disable=too-many-locals
 def selfcal_pipeline(
-    input_ms_list: list[str],
+    input_ms_list: list[Path],
     *,
-    outdir: str,
-    singularity_image: Optional[str],
+    outdir: Path,
+    singularity_image: Optional[Path],
     size: tuple[int, int],
     scale: str,
     weight: str = "uniform",
-    initial_sky_model: Optional[str] = None,
+    initial_sky_model: Optional[Path] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
     clean_iters: Sequence[int] = (20, 100, 500),
@@ -71,42 +82,47 @@ def selfcal_pipeline(
     setup_exit_handler()
     try:
         LOGGER.info(f"Running version: {__version__}")
-        log_slurm_allocated_resources()
+        slurm_resources = get_slurm_allocated_resources()
+        log_slurm_allocated_resources(slurm_resources)
+
+        command_modifiers = []
+        if singularity_image:
+            command_modifiers.append(SingularityExec(singularity_image))
+        if slurm_resources.nodes is not None and slurm_resources.nodes > 1:
+            command_modifiers.append(Mpirun(slurm_resources.nodes))
 
         # Merge all input MSes into one, because DP3's gaincal can only operate
         # on a single input MS. We do this even if there's only one input MS,
         # to guarantee we get a fresh new MS without pre-existing MODEL_DATA.
         # That will give run times more representative of a production system.
         LOGGER.info("Merging input measurement sets into one")
-        temporary_ms = os.path.join(outdir, TEMPORARY_MS)
+        temporary_ms = outdir / TEMPORARY_MS
         merge_cmd = dp3_merge_command(input_ms_list, temporary_ms)
-        if singularity_image:
-            merge_cmd = singularify(merge_cmd, singularity_image)
-        run_command_line_in_workdir(merge_cmd, outdir)
+        run_command(merge_cmd, command_modifiers)
 
         LOGGER.info(f"Input size in bytes: {get_bytesize(temporary_ms)}")
 
-        # From there, perform self-cal in place on the merged MS
-        generator = command_line_generator(
-            temporary_ms,
-            outdir=outdir,
-            size=size,
-            scale=scale,
-            weight=weight,
-            initial_sky_model=initial_sky_model,
-            gaincal_solint=gaincal_solint,
-            gaincal_nchan=gaincal_nchan,
-            clean_iters=clean_iters,
-            phase_only_cycles=phase_only_cycles,
-            final_clean_iters=final_clean_iters,
-        )
-        for base_cmd in generator:
-            cmd = base_cmd
-            if singularity_image:
-                cmd = singularify(cmd, singularity_image)
-            cmd = make_multi_node(cmd)
-            run_command_line_in_workdir(cmd, outdir)
-            remove_unnecessary_fits_files(outdir)
+        # # From there, perform self-cal in place on the merged MS
+        # generator = command_line_generator(
+        #     temporary_ms,
+        #     outdir=outdir,
+        #     size=size,
+        #     scale=scale,
+        #     weight=weight,
+        #     initial_sky_model=initial_sky_model,
+        #     gaincal_solint=gaincal_solint,
+        #     gaincal_nchan=gaincal_nchan,
+        #     clean_iters=clean_iters,
+        #     phase_only_cycles=phase_only_cycles,
+        #     final_clean_iters=final_clean_iters,
+        # )
+        # for base_cmd in generator:
+        #     cmd = base_cmd
+        #     if singularity_image:
+        #         cmd = singularify(cmd, singularity_image)
+        #     cmd = make_multi_node(cmd)
+        #     run_command_line_in_workdir(cmd, outdir)
+        #     remove_unnecessary_fits_files(outdir)
 
         LOGGER.info("Pipeline run: SUCCESS")
 
@@ -137,35 +153,57 @@ def setup_exit_handler() -> None:
     signal.signal(signal.SIGINT, exit_handler)
 
 
-def run_command_line(cmd: CommandLine) -> None:
+def run_command(command: Command, modifiers: Sequence[PrefixModifier]):
     """
-    Run given command line, and live-capture its standard output and error
-    streams to Python loggers. Also log the total run time of the command
-    at the end.
+    Run command with given modifiers, and live-capture its standard output and
+    error streams to the pipeline's Python logger. Also log the total run time
+    of the command at the end.
     """
-    program_name = _get_program_name(cmd)
+    program_name = command.executable
     LOGGER.info(f"Running {program_name}")
-    cmd_str = shlex.join(cmd)
-    LOGGER.info(cmd_str)
+    command_args = render_command_with_modifiers(command, modifiers)
 
+    LOGGER.info(shlex.join(command_args))
     subprocess_logger = logging.getLogger(f"{LOGGER_NAME}.{program_name}")
 
     start_time = time.perf_counter()
     check_call_with_stream_capture(
-        cmd, subprocess_logger.debug, subprocess_logger.debug
+        command_args, subprocess_logger.debug, subprocess_logger.debug
     )
     end_time = time.perf_counter()
     run_time_seconds = end_time - start_time
     LOGGER.info(f"{program_name} finished in {run_time_seconds:.2f} seconds")
 
 
-def run_command_line_in_workdir(cmd: CommandLine, workdir: str) -> None:
-    """
-    Same as run_command_line() but do it with the working directory temporarily
-    changed to `workdir`.
-    """
-    with change_dir(workdir):
-        run_command_line(cmd)
+# def run_command_line(cmd: CommandLine) -> None:
+#     """
+#     Run given command line, and live-capture its standard output and error
+#     streams to Python loggers. Also log the total run time of the command
+#     at the end.
+#     """
+#     program_name = _get_program_name(cmd)
+#     LOGGER.info(f"Running {program_name}")
+#     cmd_str = shlex.join(cmd)
+#     LOGGER.info(cmd_str)
+
+#     subprocess_logger = logging.getLogger(f"{LOGGER_NAME}.{program_name}")
+
+#     start_time = time.perf_counter()
+#     check_call_with_stream_capture(
+#         cmd, subprocess_logger.debug, subprocess_logger.debug
+#     )
+#     end_time = time.perf_counter()
+#     run_time_seconds = end_time - start_time
+#     LOGGER.info(f"{program_name} finished in {run_time_seconds:.2f} seconds")
+
+
+# def run_command_line_in_workdir(cmd: CommandLine, workdir: str) -> None:
+#     """
+#     Same as run_command_line() but do it with the working directory temporarily
+#     changed to `workdir`.
+#     """
+#     with change_dir(workdir):
+#         run_command_line(cmd)
 
 
 def get_bytesize(path: str) -> int:
@@ -178,9 +216,9 @@ def get_bytesize(path: str) -> int:
     return int(bytesize_str)
 
 
-def _get_program_name(cmd: CommandLine) -> str:
-    if "wsclean" in cmd or "wsclean-mp" in cmd:
-        return "wsclean"
-    if "DP3" in cmd:
-        return "DP3"
-    return cmd[0]
+# def _get_program_name(cmd: CommandLine) -> str:
+#     if "wsclean" in cmd or "wsclean-mp" in cmd:
+#         return "wsclean"
+#     if "DP3" in cmd:
+#         return "DP3"
+#     return cmd[0]

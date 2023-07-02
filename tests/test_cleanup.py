@@ -1,5 +1,5 @@
-import pathlib
 import tempfile
+from pathlib import Path
 
 from ska_sdp_wflow_mid_selfcal.cleanup import cleanup
 from ska_sdp_wflow_mid_selfcal.selfcal_logic import TEMPORARY_MS
@@ -10,7 +10,7 @@ def test_cleanup():
     Test that the expected files are removed when calling cleanup().
     """
     with tempfile.TemporaryDirectory() as tempdir:
-        tempdir_path = pathlib.Path(tempdir)
+        tempdir_path = Path(tempdir)
 
         # Create .tmp file
         tmp_file = tempdir_path / "file.tmp"
@@ -23,7 +23,7 @@ def test_cleanup():
         (calibrated_ms / "subdir").mkdir()
         (calibrated_ms / "somefile").touch()
 
-        cleanup(tempdir)
+        cleanup(tempdir_path)
         assert not tmp_file.exists()
         assert not calibrated_ms.exists()
 
@@ -34,4 +34,4 @@ def test_cleanup_empty_directory():
     deleted are missing.
     """
     with tempfile.TemporaryDirectory() as tempdir:
-        cleanup(tempdir)
+        cleanup(Path(tempdir))

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Final, Iterator, Optional, Sequence
 
-from .command_utils import DP3Command, Command, WSCleanCommand
+from .command_utils import Command, DP3Command, WSCleanCommand
 from .logging_setup import LOGGER
 
 CommandLine = list[str]

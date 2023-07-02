@@ -1,5 +1,4 @@
 import argparse
-import os
 from pathlib import Path
 
 from .. import __version__, selfcal_pipeline

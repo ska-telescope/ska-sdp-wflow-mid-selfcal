@@ -4,7 +4,6 @@ from typing import Final, Iterator, Optional, Sequence
 from .command_utils import Command, DP3Command, WSCleanCommand
 from .logging_setup import LOGGER
 
-
 TEMPORARY_MS: Final[str] = "BewareTheBlob.ms"
 """ Name of the temporary measurement set file on which self-calibration is
 performed in-place. """

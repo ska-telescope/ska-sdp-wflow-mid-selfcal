@@ -40,15 +40,15 @@ class Scenario:
     input_args: dict
     """ Dictionary of input arguments to command_line_generator() """
 
-    expected_command_lines: list[str]
+    expected_commands: list[Command]
     """ Expected command lines, each given as a single string """
 
 
 # A scenario without any self-calibration cycles, just making the final image
 # directly. This can be done by specifying "clean_iters" as an empty sequence.
 IMAGE_ONLY_INPUT_ARGS = {
-    "input_ms": "/input/data.ms",
-    "outdir": "/output/dir",
+    "input_ms": Path("/input/data.ms"),
+    "outdir": Path("/output/dir"),
     "size": (8192, 4096),
     "scale": "1asec",
     "gaincal_solint": 3,
@@ -58,69 +58,115 @@ IMAGE_ONLY_INPUT_ARGS = {
     "phase_only_cycles": (0,),
 }
 
-IMAGE_ONLY_EXPECTED_COMMAND_LINES = [
+IMAGE_ONLY_EXPECTED_COMMANDS = [
     # Just one imaging step
-    "wsclean -temp-dir /output/dir -name final -niter 666666 "
-    "-size 8192 4096 -scale 1asec -weight uniform -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    "/input/data.ms",
+    WSCleanCommand(
+        measurement_sets=[Path("/input/data.ms")],
+        flags=[],
+        options={
+            "-size": (8192, 4096),
+            "-scale": "1asec",
+            "-niter": 666_666,
+            "-weight": "uniform",
+            "-gridder": "wgridder",
+            "-auto-threshold": 3.0,
+            "-mgain": 0.8,
+            "-parallel-deconvolution": 2048,
+            "-temp-dir": Path("/output/dir"),
+            "-name": Path("/output/dir/final"),
+        },
+    )
 ]
 
 IMAGE_ONLY = Scenario(
     name="image only",
     input_args=IMAGE_ONLY_INPUT_ARGS,
-    expected_command_lines=IMAGE_ONLY_EXPECTED_COMMAND_LINES,
+    expected_commands=IMAGE_ONLY_EXPECTED_COMMANDS,
 )
 
 
 # Single selfcal cycle with phase calibration only, plus final imaging step
 ONE_CYCLE_INPUT_ARGS = {
-    "input_ms": "/input/data.ms",
-    "outdir": "/output/dir",
+    "input_ms": Path("/input/data.ms"),
+    "outdir": Path("/output/dir"),
     "size": (8192, 4096),
     "scale": "1asec",
-    "weight": "briggs -0.5",
+    "weight": ["briggs", -0.5],
     "gaincal_solint": 3,
     "gaincal_nchan": 5,
     "clean_iters": (100,),
     "phase_only_cycles": (0,),
 }
 
-ONE_CYCLE_EXPECTED_COMMAND_LINES = [
+ONE_CYCLE_EXPECTED_COMMANDS = [
     # cycle 1 imaging
-    "wsclean -temp-dir /output/dir -name temp01 -niter 100 "
-    "-size 8192 4096 -scale 1asec -weight briggs -0.5 -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    "/input/data.ms",
+    WSCleanCommand(
+        measurement_sets=[Path("/input/data.ms")],
+        flags=[],
+        options={
+            "-size": (8192, 4096),
+            "-scale": "1asec",
+            "-niter": 100,
+            "-weight": ["briggs", -0.5],
+            "-gridder": "wgridder",
+            "-auto-threshold": 3.0,
+            "-mgain": 0.8,
+            "-parallel-deconvolution": 2048,
+            "-temp-dir": Path("/output/dir"),
+            "-name": Path("/output/dir/temp01"),
+        },
+    ),
     # phase-only gaincal
-    "DP3 numthreads=16 msin=/input/data.ms "
-    "msout=/input/data.ms msout.overwrite=true "
-    "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
-    "gaincal.solint=3 gaincal.nchan=5 "
-    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
-    "gaincal.applysolution=true",
+    DP3Command(
+        {
+            "numthreads": 16,
+            "msin": Path("/input/data.ms"),
+            "msout": Path("/input/data.ms"),
+            "msout.overwrite": True,
+            "steps": ["gaincal"],
+            "gaincal.caltype": "diagonalphase",
+            "gaincal.maxiter": 50,
+            "gaincal.solint": 3,
+            "gaincal.nchan": 5,
+            "gaincal.tolerance": 1e-3,
+            "gaincal.usemodelcolumn": True,
+            "gaincal.applysolution": True,
+        }
+    ),
     # final image
-    "wsclean -temp-dir /output/dir -name final -niter 100000 "
-    "-size 8192 4096 -scale 1asec -weight briggs -0.5 -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    "/input/data.ms",
+    WSCleanCommand(
+        measurement_sets=[Path("/input/data.ms")],
+        flags=[],
+        options={
+            "-size": (8192, 4096),
+            "-scale": "1asec",
+            "-niter": 100_000,
+            "-weight": ["briggs", -0.5],
+            "-gridder": "wgridder",
+            "-auto-threshold": 3.0,
+            "-mgain": 0.8,
+            "-parallel-deconvolution": 2048,
+            "-temp-dir": Path("/output/dir"),
+            "-name": Path("/output/dir/final"),
+        },
+    ),
 ]
 
 ONE_CYCLE = Scenario(
     name="one selfcal cycle",
     input_args=ONE_CYCLE_INPUT_ARGS,
-    expected_command_lines=ONE_CYCLE_EXPECTED_COMMAND_LINES,
+    expected_commands=ONE_CYCLE_EXPECTED_COMMANDS,
 )
 
 
 # Initial calibration, single selfcal cycle with phase calibration only,
 # plus final imaging step
 ONE_CYCLE_WITH_INITIAL_CAL_INPUT_ARGS = {
-    "input_ms": "/input/data.ms",
-    "outdir": "/output/dir",
+    "input_ms": Path("/input/data.ms"),
+    "outdir": Path("/output/dir"),
     "size": (8192, 4096),
     "scale": "1asec",
-    "initial_sky_model": "/input/skymodel.db",
+    "initial_sky_model": Path("/input/skymodel.db"),
     "gaincal_solint": 3,
     "gaincal_nchan": 5,
     "clean_iters": (100,),
@@ -129,45 +175,90 @@ ONE_CYCLE_WITH_INITIAL_CAL_INPUT_ARGS = {
 
 ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES = [
     # Initial gaincal
-    "DP3  numthreads=16 msin=/input/data.ms "
-    "msout=/input/data.ms msout.overwrite=true "
-    "steps=[gaincal] gaincal.caltype=diagonal gaincal.maxiter=50 "
-    "gaincal.solint=3 gaincal.nchan=5 "
-    "gaincal.tolerance=1e-3 "
-    "gaincal.propagatesolutions=false gaincal.usebeammodel=true "
-    "gaincal.usechannelfreq=true gaincal.applysolution=true "
-    "gaincal.sourcedb=/input/skymodel.db ",
+    DP3Command(
+        {
+            "numthreads": 16,
+            "msin": Path("/input/data.ms"),
+            "msout": Path("/input/data.ms"),
+            "msout.overwrite": True,
+            "steps": ["gaincal"],
+            "gaincal.sourcedb": Path("/input/skymodel.db"),
+            "gaincal.caltype": "diagonal",
+            "gaincal.maxiter": 50,
+            "gaincal.solint": 3,
+            "gaincal.nchan": 5,
+            "gaincal.tolerance": 1e-3,
+            "gaincal.propagatesolutions": False,
+            "gaincal.usebeammodel": True,
+            "gaincal.usechannelfreq": True,
+            "gaincal.applysolution": True,
+        }
+    ),
     # cycle 1 imaging
-    "wsclean -temp-dir /output/dir -name temp01 -niter 100 "
-    "-size 8192 4096 -scale 1asec -weight uniform -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    "/input/data.ms",
+    WSCleanCommand(
+        measurement_sets=[Path("/input/data.ms")],
+        flags=[],
+        options={
+            "-size": (8192, 4096),
+            "-scale": "1asec",
+            "-niter": 100,
+            "-weight": "uniform",
+            "-gridder": "wgridder",
+            "-auto-threshold": 3.0,
+            "-mgain": 0.8,
+            "-parallel-deconvolution": 2048,
+            "-temp-dir": Path("/output/dir"),
+            "-name": Path("/output/dir/temp01"),
+        },
+    ),
     # phase-only gaincal
-    "DP3 numthreads=16 msin=/input/data.ms "
-    "msout=/input/data.ms msout.overwrite=true "
-    "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
-    "gaincal.solint=3 gaincal.nchan=5 "
-    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
-    "gaincal.applysolution=true",
+    DP3Command(
+        {
+            "numthreads": 16,
+            "msin": Path("/input/data.ms"),
+            "msout": Path("/input/data.ms"),
+            "msout.overwrite": True,
+            "steps": ["gaincal"],
+            "gaincal.caltype": "diagonalphase",
+            "gaincal.maxiter": 50,
+            "gaincal.solint": 3,
+            "gaincal.nchan": 5,
+            "gaincal.tolerance": 1e-3,
+            "gaincal.usemodelcolumn": True,
+            "gaincal.applysolution": True,
+        }
+    ),
     # final image
-    "wsclean -temp-dir /output/dir -name final -niter 100000 "
-    "-size 8192 4096 -scale 1asec -weight uniform -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    "/input/data.ms",
+    WSCleanCommand(
+        measurement_sets=[Path("/input/data.ms")],
+        flags=[],
+        options={
+            "-size": (8192, 4096),
+            "-scale": "1asec",
+            "-niter": 100_000,
+            "-weight": "uniform",
+            "-gridder": "wgridder",
+            "-auto-threshold": 3.0,
+            "-mgain": 0.8,
+            "-parallel-deconvolution": 2048,
+            "-temp-dir": Path("/output/dir"),
+            "-name": Path("/output/dir/final"),
+        },
+    ),
 ]
 
 ONE_CYCLE_WITH_INITIAL_CAL = Scenario(
     name="one selfcal cycle, with initial calibration",
     input_args=ONE_CYCLE_WITH_INITIAL_CAL_INPUT_ARGS,
-    expected_command_lines=ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES,
+    expected_commands=ONE_CYCLE_WITH_INITIAL_CAL_EXPECTED_COMMAND_LINES,
 )
 
 
 # Single calibration loop two cycles: first one with only phase calibration,
 # second one with phase and amplitude, plus final imaging step.
 TWO_CYCLES_INPUT_ARGS = {
-    "input_ms": "/input/data.ms",
-    "outdir": "/output/dir",
+    "input_ms": Path("/input/data.ms"),
+    "outdir": Path("/output/dir"),
     "size": (8192, 4096),
     "scale": "1asec",
     "gaincal_solint": 3,
@@ -178,40 +269,96 @@ TWO_CYCLES_INPUT_ARGS = {
 
 TWO_CYCLES_EXPECTED_COMMAND_LINES = [
     # cycle 1 imaging
-    "wsclean -temp-dir /output/dir -name temp01 -niter 100 "
-    "-size 8192 4096 -scale 1asec -weight uniform -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    "/input/data.ms",
+    WSCleanCommand(
+        measurement_sets=[Path("/input/data.ms")],
+        flags=[],
+        options={
+            "-size": (8192, 4096),
+            "-scale": "1asec",
+            "-niter": 100,
+            "-weight": "uniform",
+            "-gridder": "wgridder",
+            "-auto-threshold": 3.0,
+            "-mgain": 0.8,
+            "-parallel-deconvolution": 2048,
+            "-temp-dir": Path("/output/dir"),
+            "-name": Path("/output/dir/temp01"),
+        },
+    ),
     # phase-only gaincal
-    "DP3 numthreads=16 msin=/input/data.ms "
-    "msout=/input/data.ms msout.overwrite=true "
-    "steps=[gaincal] gaincal.caltype=diagonalphase gaincal.maxiter=50 "
-    "gaincal.solint=3 gaincal.nchan=5 "
-    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
-    "gaincal.applysolution=true",
+    DP3Command(
+        {
+            "numthreads": 16,
+            "msin": Path("/input/data.ms"),
+            "msout": Path("/input/data.ms"),
+            "msout.overwrite": True,
+            "steps": ["gaincal"],
+            "gaincal.caltype": "diagonalphase",
+            "gaincal.maxiter": 50,
+            "gaincal.solint": 3,
+            "gaincal.nchan": 5,
+            "gaincal.tolerance": 1e-3,
+            "gaincal.usemodelcolumn": True,
+            "gaincal.applysolution": True,
+        }
+    ),
     # cycle 2 imaging
-    "wsclean -temp-dir /output/dir -name temp02 -niter 200 "
-    "-size 8192 4096 -scale 1asec -weight uniform -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    "/input/data.ms",
+    WSCleanCommand(
+        measurement_sets=[Path("/input/data.ms")],
+        flags=[],
+        options={
+            "-size": (8192, 4096),
+            "-scale": "1asec",
+            "-niter": 200,
+            "-weight": "uniform",
+            "-gridder": "wgridder",
+            "-auto-threshold": 3.0,
+            "-mgain": 0.8,
+            "-parallel-deconvolution": 2048,
+            "-temp-dir": Path("/output/dir"),
+            "-name": Path("/output/dir/temp02"),
+        },
+    ),
     # gaincal, both phase and amplitude
-    "DP3 numthreads=16 msin=/input/data.ms "
-    "msout=/input/data.ms msout.overwrite=true "
-    "steps=[gaincal] gaincal.caltype=diagonal gaincal.maxiter=50 "
-    "gaincal.solint=3 gaincal.nchan=5 "
-    "gaincal.tolerance=1e-3 gaincal.usemodelcolumn=true "
-    "gaincal.applysolution=true",
+    DP3Command(
+        {
+            "numthreads": 16,
+            "msin": Path("/input/data.ms"),
+            "msout": Path("/input/data.ms"),
+            "msout.overwrite": True,
+            "steps": ["gaincal"],
+            "gaincal.caltype": "diagonal",
+            "gaincal.maxiter": 50,
+            "gaincal.solint": 3,
+            "gaincal.nchan": 5,
+            "gaincal.tolerance": 1e-3,
+            "gaincal.usemodelcolumn": True,
+            "gaincal.applysolution": True,
+        }
+    ),
     # final image
-    "wsclean -temp-dir /output/dir -name final -niter 100000 "
-    "-size 8192 4096 -scale 1asec -weight uniform -gridder wgridder "
-    "-auto-threshold 3.0 -mgain 0.8 -parallel-deconvolution 2048 "
-    "/input/data.ms",
+    WSCleanCommand(
+        measurement_sets=[Path("/input/data.ms")],
+        flags=[],
+        options={
+            "-size": (8192, 4096),
+            "-scale": "1asec",
+            "-niter": 100_000,
+            "-weight": "uniform",
+            "-gridder": "wgridder",
+            "-auto-threshold": 3.0,
+            "-mgain": 0.8,
+            "-parallel-deconvolution": 2048,
+            "-temp-dir": Path("/output/dir"),
+            "-name": Path("/output/dir/final"),
+        },
+    ),
 ]
 
 TWO_CYCLES = Scenario(
     name="two selfcal cycles",
     input_args=TWO_CYCLES_INPUT_ARGS,
-    expected_command_lines=TWO_CYCLES_EXPECTED_COMMAND_LINES,
+    expected_commands=TWO_CYCLES_EXPECTED_COMMAND_LINES,
 )
 
 
@@ -231,5 +378,4 @@ def test_command_line_generator(scenario: Scenario):
     Test every command line generation scenario defined above.
     """
     generated = list(command_generator(**scenario.input_args))
-    expected = [shlex.split(text) for text in scenario.expected_command_lines]
-    assert generated == expected
+    assert generated == scenario.expected_commands

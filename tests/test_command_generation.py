@@ -1,6 +1,5 @@
-from pathlib import Path
-import shlex
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 
@@ -9,7 +8,6 @@ from ska_sdp_wflow_mid_selfcal.command_utils import (
     DP3Command,
     WSCleanCommand,
 )
-
 from ska_sdp_wflow_mid_selfcal.pipeline import (
     command_generator,
     dp3_merge_command,

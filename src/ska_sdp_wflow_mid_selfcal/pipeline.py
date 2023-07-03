@@ -16,11 +16,7 @@ from .command_utils import (
     render_command_with_modifiers,
 )
 from .logging_setup import LOGGER, LOGGER_NAME
-from .selfcal_logic import (
-    TEMPORARY_MS,
-    command_generator,
-    dp3_merge_command,
-)
+from .selfcal_logic import TEMPORARY_MS, command_generator, dp3_merge_command
 from .slurm_support import (
     get_slurm_allocated_resources,
     log_slurm_allocated_resources,

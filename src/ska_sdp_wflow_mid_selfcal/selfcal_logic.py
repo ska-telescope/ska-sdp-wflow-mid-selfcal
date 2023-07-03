@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Final, Iterator, Optional, Sequence
+from typing import Final, Iterator, Optional, Sequence, Union
 
 from .command_utils import Command, DP3Command, WSCleanCommand
 from .logging_setup import LOGGER
@@ -18,7 +18,7 @@ def wsclean_command(
     niter: int,
     size: tuple[int, int],
     scale: str,
-    weight: list[str] = ["uniform"],
+    weight: Union[str, list[str]] = "uniform",
     gridder: str = "wgridder",
     auto_threshold: float = 3.0,
     mgain: float = 0.8,
@@ -127,7 +127,7 @@ def command_generator(
     outdir: Path,
     size: tuple[int, int],
     scale: str,
-    weight: str = "uniform",
+    weight: Union[str, list[str]] = "uniform",
     initial_sky_model: Optional[Path] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,

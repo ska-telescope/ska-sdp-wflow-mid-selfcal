@@ -4,7 +4,7 @@ import signal
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 from ._version import __version__
 from .cleanup import cleanup, remove_unnecessary_fits_files
@@ -36,7 +36,7 @@ def selfcal_pipeline(
     singularity_image: Optional[Path],
     size: tuple[int, int],
     scale: str,
-    weight: list[str] = ["uniform"],
+    weight: Union[str, list[str]] = "uniform",
     initial_sky_model: Optional[Path] = None,
     gaincal_solint: int = 1,
     gaincal_nchan: int = 0,
@@ -56,8 +56,8 @@ def selfcal_pipeline(
         size: size of the output image in pixels as an int tuple
             (width, height).
         scale: scale of a pixel, as a string such as "20asec" or "0.01deg".
-        weight: weighting mode as a list of strings, either ["natural"],
-            ["uniform"] or ["briggs", "<param>"]
+        weight: weighting mode as a string or list of strings, either
+            "natural", "uniform" or ["briggs", "<param>"]
             where `param` is the Briggs robustness parameter (real-valued).
         initial_sky_model: Optional path to a DP3 sky model file to use for an
             initial calibration, before the self-cal starts.

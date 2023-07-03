@@ -19,6 +19,16 @@ def _render_scalar_arg(arg: ScalarArg) -> str:
     return str(arg)
 
 
+def _dict_pretty_repr(mapping: dict, indent: int = 4) -> str:
+    """
+    Pretty print dictionary after sorting its keys.
+    """
+    tab = indent * " "
+    lines = [f"{tab}{key!r}: {val!r}" for key, val in sorted(mapping.items())]
+    lines = ["{"] + lines + [tab + "}"]
+    return "\n".join(lines)
+
+
 class Command(abc.ABC):
     """
     Base class for commands. Render using render_command() or
@@ -63,6 +73,19 @@ class Command(abc.ABC):
             and self.flags == other.flags
             and self.options == other.options
         )
+
+    def __repr__(self) -> str:
+        clsname = type(self).__name__
+        options_repr = _dict_pretty_repr(self.options)
+        lines = [
+            f"{clsname}(",
+            f"  executable={self.executable}",
+            f"  positional_args={self.positional_args}",
+            f"  flags={self.flags}",
+            f"  options={options_repr}",
+            ")",
+        ]
+        return "\n".join(lines)
 
 
 class WSCleanCommand(Command):

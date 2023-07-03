@@ -1,3 +1,4 @@
+from __future__ import annotations
 import abc
 import copy
 from pathlib import Path
@@ -54,6 +55,14 @@ class Command(abc.ABC):
         Render an optional argument as a list of strings. How this is done
         is different for WSClean and DP3.
         """
+
+    def __eq__(self, other: Command) -> bool:
+        return (
+            self.executable == other.executable
+            and self.positional_args == other.positional_args
+            and self.flags == other.flags
+            and self.options == other.options
+        )
 
 
 class WSCleanCommand(Command):

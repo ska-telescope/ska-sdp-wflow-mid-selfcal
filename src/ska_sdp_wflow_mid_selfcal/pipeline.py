@@ -18,7 +18,7 @@ from .command_utils import (
 from .logging_setup import LOGGER, LOGGER_NAME
 from .selfcal_logic import (
     TEMPORARY_MS,
-    command_line_generator,
+    command_generator,
     dp3_merge_command,
 )
 from .slurm_support import (
@@ -100,7 +100,7 @@ def selfcal_pipeline(
         LOGGER.info(f"Input size in bytes: {get_bytesize(temporary_ms)}")
 
         # From there, perform self-cal in place on the merged MS
-        generator = command_line_generator(
+        generator = command_generator(
             temporary_ms,
             outdir=outdir,
             size=size,

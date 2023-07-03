@@ -1,10 +1,17 @@
+from pathlib import Path
 import shlex
 from dataclasses import dataclass
 
 import pytest
 
+from ska_sdp_wflow_mid_selfcal.command_utils import (
+    Command,
+    DP3Command,
+    WSCleanCommand,
+)
+
 from ska_sdp_wflow_mid_selfcal.pipeline import (
-    command_line_generator,
+    command_generator,
     dp3_merge_command,
 )
 
@@ -13,13 +20,12 @@ def test_dp3_merge_command():
     """
     Self-explanatory.
     """
-    input_ms_list = ["/input/data01.ms", "/input/data02.ms"]
-    msout = "/output/merged.ms"
-    expected_cmd = (
-        "DP3 msin=[/input/data01.ms,/input/data02.ms] msout=/output/merged.ms "
-        "steps=[]"
+    input_ms_list = [Path("/input/data01.ms"), Path("/input/data02.ms")]
+    msout = Path("/output/merged.ms")
+    expected_cmd = DP3Command(
+        {"msin": input_ms_list, "msout": msout, "steps": []}
     )
-    assert dp3_merge_command(input_ms_list, msout) == shlex.split(expected_cmd)
+    assert dp3_merge_command(input_ms_list, msout) == expected_cmd
 
 
 @dataclass
@@ -224,6 +230,6 @@ def test_command_line_generator(scenario: Scenario):
     """
     Test every command line generation scenario defined above.
     """
-    generated = list(command_line_generator(**scenario.input_args))
+    generated = list(command_generator(**scenario.input_args))
     expected = [shlex.split(text) for text in scenario.expected_command_lines]
     assert generated == expected

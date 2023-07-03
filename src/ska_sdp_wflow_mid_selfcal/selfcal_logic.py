@@ -51,7 +51,6 @@ def dp3_merge_command(input_ms_list: list[str], msout: str) -> DP3Command:
     including only the DATA column. We have do this because gaincal cannot
     handle multiple input MSes.
     """
-    print(input_ms_list, msout)
     return DP3Command({"msin": input_ms_list, "msout": msout, "steps": []})
 
 
@@ -122,7 +121,7 @@ def dp3_initial_gaincal_command(
     )
 
 
-def command_line_generator(
+def command_generator(
     input_ms: Path,
     *,
     outdir: Path,

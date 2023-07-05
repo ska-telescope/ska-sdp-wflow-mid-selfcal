@@ -1,0 +1,11 @@
+
+
+ddecal:
+  solve_mode: scalarphase,
+  antenna_constraints: []
+  solve_solint: 30
+  solve_nchan: 1
+  override_dp3_options: {}
+
+prediction:
+

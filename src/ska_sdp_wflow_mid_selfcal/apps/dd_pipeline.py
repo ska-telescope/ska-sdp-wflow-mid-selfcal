@@ -5,8 +5,8 @@ from ska_sdp_wflow_mid_selfcal import __version__
 from ska_sdp_wflow_mid_selfcal.apps.dd_pipeline_app2 import selfcal_pipeline_dd
 
 
-def default_config_path() -> Path:
-    return Path("TODO")
+def _default_config_path() -> Path:
+    return Path(__file__).parent / "dd_pipeline_config.yml"
 
 
 def parse_args() -> argparse.Namespace:
@@ -23,10 +23,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=Path,
-        default=default_config_path(),
+        default=_default_config_path(),
         help=(
             "Path to configuration file. "
-            "Uses the default configuration file if unspecified."
+            "Use the default configuration file if unspecified."
         ),
     )
     parser.add_argument(

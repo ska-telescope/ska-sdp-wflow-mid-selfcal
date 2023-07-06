@@ -13,7 +13,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-mid-selfcal-pipeline = "ska_sdp_wflow_mid_selfcal.apps.pipeline_app:main"
+mid-selfcal-di = "ska_sdp_wflow_mid_selfcal.apps.di_pipeline:main"
 mid-selfcal-fits2png = "ska_sdp_wflow_mid_selfcal.apps.fits2png:main"
 
 [tool.poetry.dependencies]

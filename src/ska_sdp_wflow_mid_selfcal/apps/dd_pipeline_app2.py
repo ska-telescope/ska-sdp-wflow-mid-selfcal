@@ -31,7 +31,7 @@ class Tesselation:
     patches: list[Patch]
 
 
-def create_tesselation(sky_model: SkyModel, field: Field) -> Tesselation:
+def create_tesselation(sky_model: SkyModel, field: Field, num_patches: int) -> Tesselation:
     pass
 
 
@@ -64,7 +64,8 @@ of calibration directions (patch centres)"""
 
 
 Observation = Path
-"""For the moment, just a Path to a MeasurementSet"""
+"""For the moment, just a Path to a MeasurementSet. Later this would become
+a collection of MeasurementSets, e.g. one per sector and/or time chunk."""
 
 
 Solutions = Path
@@ -80,7 +81,10 @@ DDESolveMode = Literal["scalarphase", "scalarcomplexgain", "complexgain"]
 # - Antenna constraint: core-constrained or unconstrained
 # - Solution interval
 # - Solution bandwidth
-class Calibration:
+class DDECal:
+    """
+    Represents a DDECal step with DP3.
+    """
     def __init__(
         self,
         *,
@@ -97,12 +101,14 @@ class Calibration:
         self._dp3_options = {}  # TODO: define some defaults
         if override_dp3_options:
             self._dp3_options.update(override_dp3_options)
-        self._dp3_options.update({
-            "solve.mode": solve_mode,
-            "solve.antennaconstraint": antenna_constraints,
-            "solve.solint": solve_solint,
-            "solve.nchan": solve_nchan,
-        })
+        self._dp3_options.update(
+            {
+                "solve.mode": solve_mode,
+                "solve.antennaconstraint": antenna_constraints,
+                "solve.solint": solve_solint,
+                "solve.nchan": solve_nchan,
+            }
+        )
 
     @property
     def sourcedb_fname() -> str:
@@ -121,17 +127,21 @@ class Calibration:
         tesselation: Tesselation,
         sky_model: SkyModel,
         *,
-        workdir: Path
+        workdir: Path,
     ) -> tuple[Solutions, SourceDB]:
-        save_sourcedb(self.sourcedb_fname, tesselation, sky_model)
-        solutions = self.output_solutions_fname
+        sourcedb_path = workdir / self.sourcedb_fname
+        save_sourcedb(sourcedb_path, tesselation, sky_model)
+        solutions = workdir / self.output_solutions_fname
         cmd = self.dp3_command(input_obs)
         run_command(cmd)
-        return solutions, self.sourcedb_fname
+        return solutions, sourcedb_path
 
 
+# Predict has very few free parameters here, should be simple
 class Prediction:
-    def execute(self) -> Observation:
+    def execute(
+        self, input_obs: Observation, solutions: Solutions
+    ) -> Observation:
         pass
 
 
@@ -141,28 +151,31 @@ def subtract_observations(
     pass
 
 
-class Image:
-    pass
-
-
 class Imaging:
-    def execute(self, obs: Observation) -> Image:
+    def __init__(self) -> None:
+        pass
+
+    def execute(self, obs: Observation, field: Field) -> None:
         pass
 
 
 def selfcal_pipeline_dd(
     input_obs: Observation,
-    core_antennas: list[str],
     imaging_field: Field,
     sky_model: SkyModel,
 ) -> None:
     """
     TODO
     """
-    tesselation = create_tesselation(sky_model, imaging_field)
+    tesselation = create_tesselation(sky_model, imaging_field, num_patches=10)
 
-    calibration = Calibration()
-    solutions, sourcedb = calibration.execute(
+    ddecal = DDECal(
+        solve_mode="scalarphase",
+        antenna_constraints=[],
+        solve_solint=30,
+        solve_nchan=1,
+    )
+    solutions, sourcedb = ddecal.execute(
         input_obs, tesselation, sky_model
     )
 
@@ -174,7 +187,7 @@ def selfcal_pipeline_dd(
     )
 
     imaging = Imaging()
-    image = imaging.execute(subtracted_obs)
+    imaging.execute(subtracted_obs)
 
     # TODO: Identify sources
     # TODO: Update sky models

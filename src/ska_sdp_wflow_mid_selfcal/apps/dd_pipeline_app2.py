@@ -31,7 +31,9 @@ class Tesselation:
     patches: list[Patch]
 
 
-def create_tesselation(sky_model: SkyModel, field: Field, num_patches: int) -> Tesselation:
+def create_tesselation(
+    sky_model: SkyModel, field: Field, num_patches: int
+) -> Tesselation:
     pass
 
 
@@ -85,6 +87,7 @@ class DDECal:
     """
     Represents a DDECal step with DP3.
     """
+
     def __init__(
         self,
         *,
@@ -161,34 +164,47 @@ class Imaging:
 
 def selfcal_pipeline_dd(
     input_obs: Observation,
-    imaging_field: Field,
     sky_model: SkyModel,
+    image_size: tuple[int, int],
+    pixel_scale: str,
+    config_dict: dict,
 ) -> None:
     """
     TODO
     """
-    tesselation = create_tesselation(sky_model, imaging_field, num_patches=10)
 
-    ddecal = DDECal(
-        solve_mode="scalarphase",
-        antenna_constraints=[],
-        solve_solint=30,
-        solve_nchan=1,
-    )
-    solutions, sourcedb = ddecal.execute(
-        input_obs, tesselation, sky_model
-    )
+    field = Field()
 
-    prediction = Prediction()
-    predicted_obs = prediction.execute()
+    for cycle_index, cycle_params in enumerate(
+        config_dict["selfcal_cycles"], start=1
+    ):
 
-    subtracted_obs = subtract_observations(
-        input_obs, predicted_obs, Path("TODO")
-    )
+        tesselation = create_tesselation(
+            sky_model,
+            field,
+            num_patches=cycle_params["tesselation"]["num_patches"],
+        )
 
-    imaging = Imaging()
-    imaging.execute(subtracted_obs)
+        dde_par = cycle_params["ddecal"]
+        ddecal = DDECal(
+            solve_mode=dde_par["solve_mode"],
+            antenna_constraints=dde_par["antenna_constraints"],
+            solve_solint=dde_par["solve_solint"],
+            solve_nchan=dde_par["solve_nchan"],
+            override_dp3_options=dde_par["override_dp3_options"],
+        )
+        solutions, sourcedb = ddecal.execute(input_obs, tesselation, sky_model)
 
-    # TODO: Identify sources
-    # TODO: Update sky models
-    # ... loop
+        prediction = Prediction()
+        predicted_obs = prediction.execute()
+
+        subtracted_obs = subtract_observations(
+            input_obs, predicted_obs, Path("TODO")
+        )
+
+        imaging = Imaging()
+        imaging.execute(subtracted_obs)
+
+        # TODO: Identify sources
+        # TODO: Update sky models
+        # ... loop

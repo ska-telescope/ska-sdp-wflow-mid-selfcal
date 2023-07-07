@@ -1,10 +1,11 @@
 # pylint: disable=redefined-outer-name
+import copy
 import os
 import tempfile
 
 import pytest
 
-from ska_sdp_wflow_mid_selfcal.skymodel import SkyModel, Source
+from ska_sdp_wflow_mid_selfcal.skymodel import Shape, SkyModel, Source
 
 
 @pytest.fixture
@@ -13,7 +14,7 @@ def example_skymodel_file_path() -> str:
     Path to the skymodel test file.
     """
     thisdir = os.path.dirname(__file__)
-    return os.path.join(thisdir, "data", "example.skymodel")
+    return os.path.join(thisdir, "data", "example.sourcedb")
 
 
 @pytest.fixture
@@ -30,9 +31,7 @@ def expected_example_sources() -> list[Source]:
         spectral_index=[2.0, 0.0],
         logarithmic_si=False,
         reference_frequency_hz=1420000000.0,
-        major_fwhm_asec=0.0,
-        minor_fwhm_asec=0.0,
-        position_angle_deg=0.0,
+        shape=Shape(0.0, 0.0, 0.0),
     )
 
     source_2 = Source(
@@ -44,9 +43,7 @@ def expected_example_sources() -> list[Source]:
         spectral_index=[2.0, 0.0],
         logarithmic_si=False,
         reference_frequency_hz=1420000000.0,
-        major_fwhm_asec=0.0,
-        minor_fwhm_asec=0.0,
-        position_angle_deg=0.0,
+        shape=Shape(0.0, 0.0, 0.0),
     )
 
     source_3 = Source(
@@ -58,11 +55,45 @@ def expected_example_sources() -> list[Source]:
         spectral_index=[1.0, 0.0],
         logarithmic_si=False,
         reference_frequency_hz=666666666.0,
-        major_fwhm_asec=0.0,
-        minor_fwhm_asec=0.0,
-        position_angle_deg=0.0,
+        shape=Shape(0.0, 0.0, 0.0),
     )
     return [source_1, source_2, source_3]
+
+
+def test_source_equality_operator():
+    """
+    Check that the custom equality operator for Sources works as expected. It
+    tolerates small differences in RA/Dec that may arise when parsing
+    coordinate strings in DD:MM:SS format.
+    """
+    source = Source(
+        name="a",
+        patch="Patch_1",
+        ra_deg=0.0,
+        dec_deg=0.0,
+        stokes_i=1.0,
+        spectral_index=[1.0, 0.0],
+        logarithmic_si=False,
+        reference_frequency_hz=666666666.0,
+        shape=Shape(0.0, 0.0, 0.0),
+    )
+
+    source_copy = copy.deepcopy(source)
+    assert source == source_copy
+
+    # Check that RA/Dec within 1e-12 degrees of each other are acceptable
+    source_close = copy.deepcopy(source)
+    eps = 1.0e-12
+    source_close.ra_deg += eps
+    source_close.dec_deg -= eps
+    assert source == source_close
+
+    # ... but no more than that
+    source_not_close = copy.deepcopy(source)
+    eps = 1.0e-11
+    source_not_close.ra_deg += eps
+    source_not_close.dec_deg -= eps
+    assert source != source_not_close
 
 
 def test_parsing_sourcedb_skymodel_file(
@@ -86,7 +117,7 @@ def test_skymodel_identical_after_saving_to_sourcedb_then_loading(
     original = SkyModel(expected_example_sources)
 
     with tempfile.TemporaryDirectory() as tempdir:
-        fname = os.path.join(tempdir, "test.skymodel")
+        fname = os.path.join(tempdir, "test.sourcedb")
         original.save_sourcedb(fname)
 
         loaded = SkyModel.load_sourcedb(fname)

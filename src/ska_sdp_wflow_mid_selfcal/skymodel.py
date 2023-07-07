@@ -10,7 +10,16 @@ import math
 import re
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Callable, Match, Optional, Pattern, Sequence, Union
+from typing import (
+    Callable,
+    Literal,
+    Match,
+    Optional,
+    Pattern,
+    Sequence,
+    Union,
+    get_type_hints,
+)
 
 import astropy.units as u
 from astropy.coordinates import Angle
@@ -190,10 +199,51 @@ def _sourcedb_line_to_dict(
     return result
 
 
-def _float_sequence_isclose(
+def _float_angles_close(left: float, right: float) -> bool:
+    """
+    Custom float equality closeness check. In practice, this is to work around
+    small numerical errors that arise when parsing coordinates in DD:MM:SS
+    format. Thresholds are adjusted to that use case.
+    """
+    return math.isclose(left, right, rel_tol=0.0, abs_tol=1e-12)
+
+
+def _float_angle_sequences_close(
     left: Sequence[float], right: Sequence[float]
 ) -> bool:
-    return all(math.isclose(va, vb) for va, vb in zip(left, right))
+    return all(_float_angles_close(va, vb) for va, vb in zip(left, right))
+
+
+@dataclass
+class Shape:
+    """
+    Parameters for a Gaussian-shaped source. A source with a major axis FWHM
+    of zero is considered a point source.
+    """
+
+    major_fwhm_asec: float
+    minor_fwhm_asec: float
+    position_angle_deg: float
+
+    def __post_init__(self) -> None:
+        if not self.major_fwhm_asec >= 0:
+            raise ValueError("Major axis FWHM must be >= 0")
+        if not self.major_fwhm_asec >= self.minor_fwhm_asec:
+            raise ValueError("Major axis FWHM must be >= minor axis FWHM")
+
+    @property
+    def is_point(self) -> bool:
+        """
+        Whether the source is a point source.
+        """
+        return self.major_fwhm_asec == 0
+
+    @property
+    def sourcedb_type(self) -> Literal["POINT", "GAUSSIAN"]:
+        """
+        String that would describe the type of the source in a sourcedb file.
+        """
+        return "POINT" if self.is_point else "GAUSSIAN"
 
 
 # pylint:disable=too-many-instance-attributes
@@ -208,31 +258,30 @@ class Source:
     ra_deg: float
     dec_deg: float
     patch: Optional[str]
+    shape: Shape
     stokes_i: float
-    major_fwhm_asec: float
-    minor_fwhm_asec: float
-    position_angle_deg: float
     spectral_index: list[float]
     logarithmic_si: bool
     reference_frequency_hz: float
 
     # NOTE: We have to customise the equality operator, because when parsing
-    # floating point values from text (especially RA/Dec) we may end up with
-    # a value that deviates from expectation by a few double-precision epsilons
+    # RA/Dec from text format, we may end up with a value that deviates from
+    # expectation by a few double-precision epsilons
     def __eq__(self, other: Source) -> bool:
-        float_attr_names = [
-            name
-            # pylint: disable=no-member
-            for name, typ in type(self).__annotations__.items()
-            if typ is float
-        ]
-        float_attrs_self = [getattr(self, name) for name in float_attr_names]
-        float_attts_other = [getattr(other, name) for name in float_attr_names]
-        return _float_sequence_isclose(
-            float_attrs_self, float_attts_other
-        ) and _float_sequence_isclose(
-            self.spectral_index, other.spectral_index
+        attrs = get_type_hints(Source)
+        angle_keys = ["ra_deg", "dec_deg"]
+        other_keys = list(set(attrs.keys()) - set(angle_keys))
+
+        def _values(obj: Source, keys: list[str]) -> list:
+            return [getattr(obj, key) for key in keys]
+
+        angle_vals_close = _float_angle_sequences_close(
+            _values(self, angle_keys), _values(other, angle_keys)
         )
+        other_vals_equal = _values(self, other_keys) == _values(
+            other, other_keys
+        )
+        return other_vals_equal and angle_vals_close
 
 
 def _make_sourcedb_format_line() -> str:
@@ -243,10 +292,10 @@ def _make_sourcedb_format_line() -> str:
 
 
 def _source_to_sourcedb_entry(source: Source) -> str:
-    type_str = "POINT" if source.major_fwhm_asec == 0 else "GAUSSIAN"
+    shape = source.shape
     field_values = [
         source.name,
-        type_str,
+        shape.sourcedb_type,
         source.patch,
         str(source.ra_deg) + "deg",
         str(source.dec_deg) + "deg",
@@ -254,9 +303,9 @@ def _source_to_sourcedb_entry(source: Source) -> str:
         _format_spectral_index(source.spectral_index),
         _format_bool(source.logarithmic_si),
         source.reference_frequency_hz,
-        source.major_fwhm_asec,
-        source.minor_fwhm_asec,
-        source.position_angle_deg,
+        shape.major_fwhm_asec,
+        shape.minor_fwhm_asec,
+        shape.position_angle_deg,
     ]
     return ", ".join(map(str, field_values))
 
@@ -265,17 +314,19 @@ def _source_from_attributes_dict(
     attrs: dict[str, Optional[FieldValue]]
 ) -> Source:
 
-    major_fwhm_asec = attrs["MajorAxis"]
-    minor_fwhm_asec = attrs["MinorAxis"]
-    position_angle_deg = attrs["Orientation"]
+    shape = Shape(
+        major_fwhm_asec=attrs["MajorAxis"],
+        minor_fwhm_asec=attrs["MinorAxis"],
+        position_angle_deg=attrs["Orientation"],
+    )
 
     # Internally, we consider that any source with a major fwhm of zero is a
     # point. Here we ensure consistency, by considering that the "Type" field
     # overrules the others.
     if attrs["Type"] == "POINT":
-        major_fwhm_asec = 0.0
-        minor_fwhm_asec = 0.0
-        position_angle_deg = 0.0
+        shape.major_fwhm_asec = 0.0
+        shape.minor_fwhm_asec = 0.0
+        shape.position_angle_deg = 0.0
 
     return Source(
         name=attrs["Name"],
@@ -283,9 +334,7 @@ def _source_from_attributes_dict(
         dec_deg=attrs["Dec"],
         patch=attrs["Patch"],
         stokes_i=attrs["I"],
-        major_fwhm_asec=major_fwhm_asec,
-        minor_fwhm_asec=minor_fwhm_asec,
-        position_angle_deg=position_angle_deg,
+        shape=shape,
         spectral_index=attrs["SpectralIndex"],
         logarithmic_si=attrs["LogarithmicSI"],
         reference_frequency_hz=attrs["ReferenceFrequency"],

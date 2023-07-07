@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Literal, Optional
 
 from astropy.coordinates import SkyCoord
+import astropy.units as u
 
 from ska_sdp_wflow_mid_selfcal.command_utils import (
     DP3Command,
@@ -49,15 +50,8 @@ def save_sourcedb(
 @dataclass
 class Field:
     centre: SkyCoord
-    pixel_scale_deg: float
+    pixel_scale_asec: float
     num_pixels: int
-
-
-AntennaConstraints = list[list[str]]
-"""Defines groups of antennas constrained to have the same calibration
-solutions"""
-# TODO: We will have to update the command rendering code to deal with lists
-# of lists, which it doesn't at the moment.
 
 
 SourceDB = Path
@@ -72,6 +66,7 @@ a collection of MeasurementSets, e.g. one per sector and/or time chunk."""
 
 Solutions = Path
 """For the moment, just a Path to a .h5parm file"""
+
 
 DDESolveMode = Literal["scalarphase", "scalarcomplexgain", "complexgain"]
 """Accepted solve.mode values for DDECal"""
@@ -92,7 +87,6 @@ class DDECal:
         self,
         *,
         solve_mode: DDESolveMode,
-        antenna_constraints: AntennaConstraints,
         solve_solint: int,
         solve_nchan: int,
         override_dp3_options: Optional[dict] = None,
@@ -100,6 +94,7 @@ class DDECal:
         """
         NOTE: later on, we may want to define solutions interval and bandwidth
         in seconds and Hz instead.
+        Also, we may want to add antenna constraints.
         """
         self._dp3_options = {}  # TODO: define some defaults
         if override_dp3_options:
@@ -107,19 +102,18 @@ class DDECal:
         self._dp3_options.update(
             {
                 "solve.mode": solve_mode,
-                "solve.antennaconstraint": antenna_constraints,
                 "solve.solint": solve_solint,
                 "solve.nchan": solve_nchan,
             }
         )
 
     @property
-    def sourcedb_fname() -> str:
-        pass
+    def sourcedb_fname(self) -> str:
+        return "sky_model.sourcedb"
 
     @property
-    def output_solutions_fname() -> str:
-        pass
+    def output_solutions_fname(self) -> str:
+        return "solutions.h5parm"
 
     def dp3_command(self, msin: Path) -> DP3Command:
         pass
@@ -136,44 +130,51 @@ class DDECal:
         save_sourcedb(sourcedb_path, tesselation, sky_model)
         solutions = workdir / self.output_solutions_fname
         cmd = self.dp3_command(input_obs)
-        run_command(cmd)
+        # run_command(cmd, modifiers=[])
         return solutions, sourcedb_path
 
-
-# Predict has very few free parameters here, should be simple
-class Prediction:
-    def execute(
-        self, input_obs: Observation, solutions: Solutions
-    ) -> Observation:
-        pass
-
-
-def subtract_observations(
-    left: Observation, right: Observation, output_filepath: Path
-) -> Observation:
-    pass
+    @classmethod
+    def from_config_dict(cls, conf: dict) -> DDECal:
+        return cls(
+            solve_mode=conf["solve_mode"],
+            solve_solint=conf["solve_solint"],
+            solve_nchan=conf["solve_nchan"],
+            override_dp3_options=conf["override_dp3_options"],
+        )
 
 
 class Imaging:
     def __init__(self) -> None:
         pass
 
-    def execute(self, obs: Observation, field: Field) -> None:
+    def execute(
+        self, obs: Observation, field: Field, solutions: Solutions
+    ) -> None:
         pass
+
+    @classmethod
+    def from_config_dict(cls, conf: dict) -> Imaging:
+        return cls()  # TODO
 
 
 def selfcal_pipeline_dd(
     input_obs: Observation,
     sky_model: SkyModel,
-    image_size: tuple[int, int],
-    pixel_scale: str,
+    *,
+    num_pixels: int,
+    pixel_scale_asec: float,
     config_dict: dict,
+    workdir: Path,
 ) -> None:
     """
-    TODO
+    Inputs to this function are already parsed.
     """
 
-    field = Field()
+    field = Field(
+        centre=SkyCoord(0.0, 0.0, unit=(u.deg, u.deg)),
+        pixel_scale_asec=pixel_scale_asec,
+        num_pixels=num_pixels,
+    )
 
     for cycle_index, cycle_params in enumerate(
         config_dict["selfcal_cycles"], start=1
@@ -185,26 +186,15 @@ def selfcal_pipeline_dd(
             num_patches=cycle_params["tesselation"]["num_patches"],
         )
 
-        dde_par = cycle_params["ddecal"]
-        ddecal = DDECal(
-            solve_mode=dde_par["solve_mode"],
-            antenna_constraints=dde_par["antenna_constraints"],
-            solve_solint=dde_par["solve_solint"],
-            solve_nchan=dde_par["solve_nchan"],
-            override_dp3_options=dde_par["override_dp3_options"],
-        )
-        solutions, sourcedb = ddecal.execute(input_obs, tesselation, sky_model)
+        # TODO: Save sourcedb file here, instead of inside ddecal.execute()
 
-        prediction = Prediction()
-        predicted_obs = prediction.execute()
-
-        subtracted_obs = subtract_observations(
-            input_obs, predicted_obs, Path("TODO")
+        ddecal = DDECal.from_config_dict(cycle_params["ddecal"])
+        solutions, sourcedb = ddecal.execute(
+            input_obs, tesselation, sky_model, workdir=workdir
         )
 
-        imaging = Imaging()
-        imaging.execute(subtracted_obs)
+        imaging = Imaging.from_config_dict(cycle_params["imaging"])
+        imaging.execute(input_obs, field, solutions)
 
         # TODO: Identify sources
         # TODO: Update sky models
-        # ... loop

@@ -1,7 +1,5 @@
 # Model DD-selfcal pipeline configuration file
 
-core_antennas: &core_antennas ant000, ant001, ant002
-
 selfcal_cycles:
   # Cycle 1
   - tesselation:
@@ -9,18 +7,13 @@ selfcal_cycles:
 
     ddecal:
       solve_mode: scalarphase
-      antenna_constraints: [*core_antennas]
       solve_solint: 30
       solve_nchan: 1
       override_dp3_options: {}
 
-    prediction:
-      override_dp3_options: {}
-
     imaging:
       override_wsclean_options:
-        "-parallel-deconvolution": 2048
-        "-mgain": 0.8
+        "-mgain": 0.7
 
   # Cycle 2
   - tesselation:
@@ -28,18 +21,12 @@ selfcal_cycles:
 
     ddecal:
       solve_mode: scalarphase
-      antenna_constraints: [*core_antennas]
       solve_solint: 30
       solve_nchan: 1
       override_dp3_options: {}
 
-    prediction:
-      override_dp3_options: {}
-
     imaging:
-      override_wsclean_options:
-        "-parallel-deconvolution": 2048
-        "-mgain": 0.8
+      override_wsclean_options: {}
 
   # Cycle 3
   - tesselation:
@@ -47,15 +34,9 @@ selfcal_cycles:
 
     ddecal:
       solve_mode: complexgain
-      antenna_constraints: []
       solve_solint: 30
       solve_nchan: 1
       override_dp3_options: {}
 
-    prediction:
-      override_dp3_options: {}
-
     imaging:
-      override_wsclean_options:
-        "-parallel-deconvolution": 2048
-        "-mgain": 0.8
+      override_wsclean_options: {}

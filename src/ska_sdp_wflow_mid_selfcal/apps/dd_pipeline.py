@@ -1,8 +1,10 @@
 import argparse
 from pathlib import Path
 
+import yaml
+
 from ska_sdp_wflow_mid_selfcal import __version__
-from ska_sdp_wflow_mid_selfcal.apps.dd_pipeline_app2 import selfcal_pipeline_dd
+from ska_sdp_wflow_mid_selfcal.apps.dd_pipeline_app2 import selfcal_pipeline_dd, SkyModel
 
 
 def _default_config_path() -> Path:
@@ -25,7 +27,7 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=_default_config_path(),
         help=(
-            "Path to configuration file. "
+            "Path to the selfcal pipeline configuration file. "
             "Use the default configuration file if unspecified."
         ),
     )
@@ -36,17 +38,16 @@ def parse_args() -> argparse.Namespace:
         help="Path to sky model file in sourcedb format.",
     )
     parser.add_argument(
-        "--size",
-        nargs=2,
+        "--num-pixels",
         type=int,
         required=True,
-        help="Output image size in pixels, as two integers <width> <height>",
+        help="Output image size in pixels.",
     )
     parser.add_argument(
-        "--scale",
-        type=str,
+        "--pixel-scale",
+        type=float,
         required=True,
-        help=('Scale of a pixel, as a string such as "20asec" or "0.01deg".'),
+        help=("Scale of a pixel in arcseconds."),
     )
     parser.add_argument(
         "--input-ms",
@@ -61,6 +62,20 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
     print(args)
+
+    with open(args.config, "r") as fobj:
+        config_dict = yaml.safe_load(fobj)
+
+    sky_model = SkyModel(sources=[])  # TODO
+
+    selfcal_pipeline_dd(
+        args.input_ms,
+        sky_model,
+        num_pixels=args.num_pixels,
+        pixel_scale_asec=args.pixel_scale,
+        config_dict=config_dict,
+        workdir=Path.cwd(),
+    )
 
 
 if __name__ == "__main__":

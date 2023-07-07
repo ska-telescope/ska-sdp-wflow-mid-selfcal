@@ -219,6 +219,12 @@ class Shape:
     """
     Parameters for a Gaussian-shaped source. A source with a major axis FWHM
     of zero is considered a point source.
+
+    Args:
+        major_fwhm_asec: Major full-width at half-maximum in arcseconds
+        minor_fwhm_asec: Minor full-width at half-maximum in arcseconds
+        position_angle_deg: Position angle of the major axis, in degrees
+            East of North
     """
 
     major_fwhm_asec: float
@@ -246,6 +252,31 @@ class Shape:
         return "POINT" if self.is_point else "GAUSSIAN"
 
 
+@dataclass
+class FluxModel:
+    """
+    Flux parameters for a source. See the WSClean docs for an explanation of
+    the meaning of the fields:
+    https://wsclean.readthedocs.io/en/latest/component_list.html
+
+    Args:
+        stokes_i: Stokes I flux in Jy
+        spectral_index: list of coefficients of a logarithmic or ordinary
+            polynomial that describe the source flux as a function of
+            frequency.
+        logarithmic_si: Whether `spectral_index` should be interpreted as a
+            list of coefficients for a polynomial in `log(nu/nu_0)`,
+            where `nu_0` is the reference frequency (see below).
+        reference_frequency_hz: Frequency at which the flux and spectral index
+            polynomial expansion coefficients are defined.
+    """
+
+    stokes_i: float
+    reference_frequency_hz: float
+    spectral_index: list[float]
+    logarithmic_si: bool
+
+
 # pylint:disable=too-many-instance-attributes
 @dataclass
 class Source:
@@ -257,12 +288,9 @@ class Source:
     name: str
     ra_deg: float
     dec_deg: float
-    patch: Optional[str]
     shape: Shape
-    stokes_i: float
-    spectral_index: list[float]
-    logarithmic_si: bool
-    reference_frequency_hz: float
+    flux_model: FluxModel
+    patch: Optional[str]
 
     # NOTE: We have to customise the equality operator, because when parsing
     # RA/Dec from text format, we may end up with a value that deviates from
@@ -293,16 +321,17 @@ def _make_sourcedb_format_line() -> str:
 
 def _source_to_sourcedb_entry(source: Source) -> str:
     shape = source.shape
+    flux_model = source.flux_model
     field_values = [
         source.name,
         shape.sourcedb_type,
         source.patch,
         str(source.ra_deg) + "deg",
         str(source.dec_deg) + "deg",
-        source.stokes_i,
-        _format_spectral_index(source.spectral_index),
-        _format_bool(source.logarithmic_si),
-        source.reference_frequency_hz,
+        flux_model.stokes_i,
+        _format_spectral_index(flux_model.spectral_index),
+        _format_bool(flux_model.logarithmic_si),
+        flux_model.reference_frequency_hz,
         shape.major_fwhm_asec,
         shape.minor_fwhm_asec,
         shape.position_angle_deg,
@@ -328,16 +357,20 @@ def _source_from_attributes_dict(
         shape.minor_fwhm_asec = 0.0
         shape.position_angle_deg = 0.0
 
+    flux_model = FluxModel(
+        stokes_i=attrs["I"],
+        reference_frequency_hz=attrs["ReferenceFrequency"],
+        spectral_index=attrs["SpectralIndex"],
+        logarithmic_si=attrs["LogarithmicSI"],
+    )
+
     return Source(
         name=attrs["Name"],
         ra_deg=attrs["Ra"],
         dec_deg=attrs["Dec"],
         patch=attrs["Patch"],
-        stokes_i=attrs["I"],
+        flux_model=flux_model,
         shape=shape,
-        spectral_index=attrs["SpectralIndex"],
-        logarithmic_si=attrs["LogarithmicSI"],
-        reference_frequency_hz=attrs["ReferenceFrequency"],
     )
 
 

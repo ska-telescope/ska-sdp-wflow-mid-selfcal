@@ -63,10 +63,15 @@ def main():
     args = parse_args()
     print(args)
 
+    # TODO: create output directory for pipeline run
+
+    # TODO: setup logger
+
     with open(args.config, "r") as fobj:
         config_dict = yaml.safe_load(fobj)
 
-    sky_model = SkyModel(sources=[])  # TODO
+    # TODO: load sky model
+    sky_model = SkyModel(sources=[])
 
     selfcal_pipeline_dd(
         args.input_ms,
@@ -74,7 +79,7 @@ def main():
         num_pixels=args.num_pixels,
         pixel_scale_asec=args.pixel_scale,
         config_dict=config_dict,
-        workdir=Path.cwd(),
+        outdir=Path.cwd(),
     )
 
 

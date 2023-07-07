@@ -6,9 +6,7 @@ from typing import Literal, Optional
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
-from ska_sdp_wflow_mid_selfcal.command_utils import (
-    DP3Command,
-)
+from ska_sdp_wflow_mid_selfcal.command_utils import DP3Command, WSCleanCommand
 from ska_sdp_wflow_mid_selfcal.pipeline import run_command
 
 
@@ -30,6 +28,9 @@ class Patch:
 @dataclass
 class Tesselation:
     patches: list[Patch]
+
+    def save_ds9_file(self, fpath: Path) -> None:
+        pass
 
 
 def create_tesselation(
@@ -85,6 +86,9 @@ class DDECal:
 
     def __init__(
         self,
+        input_obs: Observation,
+        sourcedb: SourceDB,
+        output_solutions: Solutions,
         *,
         solve_mode: DDESolveMode,
         solve_solint: int,
@@ -96,6 +100,10 @@ class DDECal:
         in seconds and Hz instead.
         Also, we may want to add antenna constraints.
         """
+        self._input_obs = input_obs
+        self._sourcedb = sourcedb
+        self._output_solutions = output_solutions
+
         self._dp3_options = {}  # TODO: define some defaults
         if override_dp3_options:
             self._dp3_options.update(override_dp3_options)
@@ -107,35 +115,21 @@ class DDECal:
             }
         )
 
-    @property
-    def sourcedb_fname(self) -> str:
-        return "sky_model.sourcedb"
-
-    @property
-    def output_solutions_fname(self) -> str:
-        return "solutions.h5parm"
-
-    def dp3_command(self, msin: Path) -> DP3Command:
-        pass
-
-    def execute(
-        self,
-        input_obs: Observation,
-        tesselation: Tesselation,
-        sky_model: SkyModel,
-        *,
-        workdir: Path,
-    ) -> tuple[Solutions, SourceDB]:
-        sourcedb_path = workdir / self.sourcedb_fname
-        save_sourcedb(sourcedb_path, tesselation, sky_model)
-        solutions = workdir / self.output_solutions_fname
-        cmd = self.dp3_command(input_obs)
-        # run_command(cmd, modifiers=[])
-        return solutions, sourcedb_path
+    def get_command(self) -> DP3Command:
+        pass  # TODO
 
     @classmethod
-    def from_config_dict(cls, conf: dict) -> DDECal:
+    def from_config_dict(
+        cls,
+        input_obs: Observation,
+        sourcedb: SourceDB,
+        output_solutions: Solutions,
+        conf: dict,
+    ) -> DDECal:
         return cls(
+            input_obs,
+            sourcedb,
+            output_solutions,
             solve_mode=conf["solve_mode"],
             solve_solint=conf["solve_solint"],
             solve_nchan=conf["solve_nchan"],
@@ -144,17 +138,28 @@ class DDECal:
 
 
 class Imaging:
-    def __init__(self) -> None:
-        pass
-
-    def execute(
-        self, obs: Observation, field: Field, solutions: Solutions
+    def __init__(
+        self,
+        input_obs: Observation,
+        field: Field,
+        solutions: Solutions,
+        *,
+        override_wsclean_options: Optional[dict] = None,
     ) -> None:
         pass
 
+    def get_command(self) -> WSCleanCommand:
+        pass
+
     @classmethod
-    def from_config_dict(cls, conf: dict) -> Imaging:
-        return cls()  # TODO
+    def from_config_dict(
+        cls,
+        input_obs: Observation,
+        field: Field,
+        solutions: Solutions,
+        conf: dict,
+    ) -> Imaging:
+        return cls(input_obs, field, solutions)  # TODO
 
 
 def selfcal_pipeline_dd(
@@ -164,14 +169,14 @@ def selfcal_pipeline_dd(
     num_pixels: int,
     pixel_scale_asec: float,
     config_dict: dict,
-    workdir: Path,
+    outdir: Path,
 ) -> None:
     """
     Inputs to this function are already parsed.
     """
 
     field = Field(
-        centre=SkyCoord(0.0, 0.0, unit=(u.deg, u.deg)),
+        centre=SkyCoord(0.0, 0.0, unit=(u.deg, u.deg)),  # TODO
         pixel_scale_asec=pixel_scale_asec,
         num_pixels=num_pixels,
     )
@@ -186,15 +191,20 @@ def selfcal_pipeline_dd(
             num_patches=cycle_params["tesselation"]["num_patches"],
         )
 
-        # TODO: Save sourcedb file here, instead of inside ddecal.execute()
+        sourcedb = outdir / "skymodel.sourcedb"
+        save_sourcedb(sourcedb, tesselation, sky_model)
 
-        ddecal = DDECal.from_config_dict(cycle_params["ddecal"])
-        solutions, sourcedb = ddecal.execute(
-            input_obs, tesselation, sky_model, workdir=workdir
+        solutions = outdir / "solutions.h5parm"
+
+        ddecal = DDECal.from_config_dict(
+            input_obs, sourcedb, solutions, cycle_params["ddecal"]
         )
+        dp3_command = ddecal.get_command()
+        # run_command(dp3_command)
 
-        imaging = Imaging.from_config_dict(cycle_params["imaging"])
-        imaging.execute(input_obs, field, solutions)
+        imaging = Imaging.from_config_dict(input_obs, field, solutions, cycle_params["imaging"])
+        wsclean_command = imaging.get_command()
+        # run_command(wsclean_command)
 
         # TODO: Identify sources
         # TODO: Update sky models
